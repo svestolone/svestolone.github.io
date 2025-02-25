@@ -3,18 +3,20 @@
 <head>
     <title>Doodle Invaders</title>
     <style>
-        canvas { border: 1px solid black; background: #000033; }
+        canvas { border: 1px solid black; background: #000033; touch-action: none; }
         body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #000; color: white; font-family: Arial, sans-serif; }
         #menu { position: absolute; text-align: center; display: none; }
         #game-over { position: absolute; text-align: center; display: none; }
         #start-btn, #restart-btn, #next-level-btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; border: none; color: white; margin: 10px; }
         #start-btn:hover, #restart-btn:hover, #next-level-btn:hover { background: #45a049; }
+        #level-text { font-size: 24px; margin: 10px; }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     <div id="menu">
         <h1>Doodle Invaders</h1>
+        <p id="level-text">Level: 1 (standard)</p>
         <button id="start-btn" onclick="startGame()">Start</button>
     </div>
     <div id="game-over">
@@ -30,6 +32,7 @@
         const gameOverText = document.getElementById('game-over-text');
         const nextLevelBtn = document.getElementById('next-level-btn');
         const restartBtn = document.getElementById('restart-btn');
+        const levelText = document.getElementById('level-text');
 
         // Load assets
         const heroImg = new Image(); heroImg.src = 'hero.png';
@@ -54,22 +57,44 @@
         let divingEnemy = null;
         let level = 0; // 0: Standard, 1: Fast, 2: Shooter
 
-        // Controls
+        // Controls (keyboard)
         let keys = {};
         window.addEventListener('keydown', (e) => keys[e.key] = true);
         window.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // Touch controls
+        let touchActive = false;
+        let touchX = 0;
+        let touchY = 0;
+        let shootRequested = false;
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchActive = true;
+            touchX = e.touches[0].clientX - canvas.offsetLeft;
+            touchY = e.touches[0].clientY - canvas.offsetTop;
+            shootRequested = true;
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX - canvas.offsetLeft;
+            touchY = e.touches[0].clientY - canvas.offsetTop;
+        });
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchActive = false;
+        });
+
         // Enemy types
         const enemyTypes = [
-            { type: 'standard', speed: 0.5, size: 40, img: enemyImg },
-            { type: 'fast', speed: 1, size: 35, img: enemy1Img },
+            { type: 'standard', speed: 0.3, size: 35, img: enemyImg },
+            { type: 'fast', speed: 0.5, size: 35, img: enemy1Img },
             { type: 'shooter', speed: 0.5, size: 45, img: enemy2Img }
         ];
 
         function initEnemies() {
             const currentType = enemyTypes[level % enemyTypes.length];
-            for (let i = 0; i < 9; i++) { // 9 rows
-                for (let j = 0; j < 3; j++) { // 3 columns
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 3; j++) {
                     enemies.push({
                         x: 600 + j * 50,
                         y: 100 + i * 50,
@@ -77,37 +102,54 @@
                         size: currentType.size,
                         type: currentType.type,
                         img: currentType.img,
-                        lastShot: 0
+                        lastShot: Math.random() * 2000 // Stagger initial shots
                     });
                 }
             }
+            // Initial shots (1-2 enemies)
+            const shooters = enemies.slice(0, Math.floor(Math.random() * 2) + 1);
+            shooters.forEach(e => {
+                enemyBullets.push({ x: e.x, y: e.y, dx: -5 });
+                e.lastShot = Date.now();
+            });
         }
 
         function spawnPowerup() {
-            if (Math.random() < 0.01) powerups.push({ x: Math.random() * 600 + 100, y: Math.random() * 550 + 25 });
+            if (Math.random() < 0.01) powerups.push({ x: Math.random() * 600 + 50, y: Math.random() * 500 + 25 });
         }
 
         function update() {
             if (!gameStarted || gameOver) return;
 
-            // Player movement
+            // Player movement (keyboard)
             if (keys['ArrowUp']) player.y = Math.max(player.y - 5, 25);
             if (keys['ArrowDown']) player.y = Math.min(player.y + 5, 575);
             if (keys['ArrowLeft']) player.x = Math.max(player.x - 5, 25);
             if (keys['ArrowRight']) player.x = Math.min(player.x + 5, 775);
 
-            // Shooting
-            if (keys[' '] && !keys['spaceHeld']) {
+            // Player movement (touch)
+            if (touchActive) {
+                const dx = touchX - player.x;
+                const dy = touchY - player.y;
+                player.x += dx * 0.1; // Smooth movement
+                player.y += dy * 0.1;
+                player.x = Math.max(25, Math.min(775, player.x));
+                player.y = Math.max(25, Math.min(575, player.y));
+            }
+
+            // Shooting (keyboard or touch)
+            if ((keys[' '] && !keys['spaceHeld']) || (shootRequested && !keys['spaceHeld'])) {
                 if (player.bullets === 1) {
                     bullets.push({ x: player.x + 25, y: player.y, dx: 7 });
                 } else {
-                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: -0.5 }); // Scatter up
-                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: 0.5 });  // Scatter down
+                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: -0.5 });
+                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: 0.5 });
                 }
                 bulletSound.play().catch(e => console.error('Bullet sound error:', e));
                 keys['spaceHeld'] = true;
+                shootRequested = false;
             }
-            if (!keys[' ']) keys['spaceHeld'] = false;
+            if (!keys[' '] && !touchActive) keys['spaceHeld'] = false;
 
             // Update player bullets
             bullets.forEach(b => { b.x += b.dx; b.y += (b.dy || 0); });
@@ -126,11 +168,11 @@
                 }
             });
 
-            // Enemy shooting
+            // Enemy shooting (random, 2-second interval)
             const now = Date.now();
             enemies.forEach(e => {
-                const shotInterval = e.type === 'shooter' ? 4000 : 8000;
-                if (now - e.lastShot > shotInterval && (e.type === 'shooter' || Math.random() < 0.3)) {
+                const shotInterval = e.type === 'shooter' ? 1000 : 2000;
+                if (now - e.lastShot > shotInterval && Math.random() < 0.005) { // 5% chance per frame
                     enemyBullets.push({ x: e.x, y: e.y, dx: -5 });
                     e.lastShot = now;
                 }
@@ -212,7 +254,7 @@
             // Draw player
             if (gameStarted) ctx.drawImage(heroImg, player.x - 25, player.y - 25, 50, 50);
 
-            // Draw enemies (no tinting)
+            // Draw enemies
             enemies.forEach(e => {
                 ctx.drawImage(e.img, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
             });
@@ -263,6 +305,7 @@
             level = 0;
             nextLevelBtn.style.display = 'none';
             restartBtn.style.display = 'inline';
+            levelText.textContent = `Level: ${level + 1} (${enemyTypes[level % enemyTypes.length].type})`;
         }
 
         function nextLevel() {
@@ -278,6 +321,7 @@
             level++;
             nextLevelBtn.style.display = 'none';
             restartBtn.style.display = 'inline';
+            levelText.textContent = `Level: ${level + 1} (${enemyTypes[level % enemyTypes.length].type})`;
         }
 
         function gameLoop() {
