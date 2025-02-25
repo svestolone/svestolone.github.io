@@ -5,26 +5,37 @@
     <style>
         canvas { border: 1px solid black; background: #000033; }
         body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #000; color: white; font-family: Arial, sans-serif; }
+        #menu { position: absolute; text-align: center; display: none; }
         #game-over { position: absolute; text-align: center; display: none; }
-        #restart-btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; border: none; color: white; }
-        #restart-btn:hover { background: #45a049; }
+        #start-btn, #restart-btn, #next-level-btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; border: none; color: white; margin: 10px; }
+        #start-btn:hover, #restart-btn:hover, #next-level-btn:hover { background: #45a049; }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="menu">
+        <h1>Doodle Invaders</h1>
+        <button id="start-btn" onclick="startGame()">Start</button>
+    </div>
     <div id="game-over">
         <h1 id="game-over-text">Game Over</h1>
         <button id="restart-btn" onclick="resetGame()">Restart</button>
+        <button id="next-level-btn" onclick="nextLevel()" style="display: none;">Next Level</button>
     </div>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const menuScreen = document.getElementById('menu');
         const gameOverScreen = document.getElementById('game-over');
         const gameOverText = document.getElementById('game-over-text');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const restartBtn = document.getElementById('restart-btn');
 
         // Load assets
         const heroImg = new Image(); heroImg.src = 'hero.png';
-        const enemyImg = new Image(); enemyImg.src = 'enemy.png';
+        const enemyImg = new Image(); enemyImg.src = 'enemy.png'; // Standard
+        const enemy1Img = new Image(); enemy1Img.src = 'enemy1.png'; // Fast
+        const enemy2Img = new Image(); enemy2Img.src = 'enemy2.png'; // Shooter
         const bulletImg = new Image(); bulletImg.src = 'bullet.png';
         const bulletSound = new Audio('bullet.wav');
         const music = new Audio('music.wav'); music.loop = true; music.volume = 0.3;
@@ -37,29 +48,47 @@
         let powerups = [];
         let score = 0;
         let gameOver = false;
+        let gameStarted = false;
         const totalEnemies = 20;
         let lastEnemyShot = 0;
         let divingEnemy = null;
+        let level = 0; // 0: Standard, 1: Fast, 2: Shooter
 
         // Controls
         let keys = {};
         window.addEventListener('keydown', (e) => keys[e.key] = true);
         window.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // Enemy types
+        const enemyTypes = [
+            { type: 'standard', speed: 0.5, size: 40, img: enemyImg },
+            { type: 'fast', speed: 1, size: 35, img: enemy1Img },
+            { type: 'shooter', speed: 0.5, size: 45, img: enemy2Img }
+        ];
+
         function initEnemies() {
+            const currentType = enemyTypes[level % enemyTypes.length];
             for (let i = 0; i < 9; i++) { // 9 rows
-                for (let j = 0; j < 5; j++) { // 5 columns
-                    enemies.push({ x: 600 + j * 50, y: 100 + i * 50, speed: 0.7 });
+                for (let j = 0; j < 3; j++) { // 3 columns
+                    enemies.push({
+                        x: 600 + j * 50,
+                        y: 100 + i * 50,
+                        speed: currentType.speed,
+                        size: currentType.size,
+                        type: currentType.type,
+                        img: currentType.img,
+                        lastShot: 0
+                    });
                 }
             }
         }
 
         function spawnPowerup() {
-            if (Math.random() < 0.005) powerups.push({ x: Math.random() * 600 + 100, y: Math.random() * 550 + 25 });
+            if (Math.random() < 0.01) powerups.push({ x: Math.random() * 600 + 100, y: Math.random() * 550 + 25 });
         }
 
         function update() {
-            if (gameOver) return;
+            if (!gameStarted || gameOver) return;
 
             // Player movement
             if (keys['ArrowUp']) player.y = Math.max(player.y - 5, 25);
@@ -91,20 +120,21 @@
                     gameOver = true;
                     gameOverText.textContent = 'Game Over';
                 }
-                // Check collision with hero
                 if (Math.hypot(player.x - e.x, player.y - e.y) < 30) {
                     gameOver = true;
                     gameOverText.textContent = 'Game Over';
                 }
             });
 
-            // Enemy shooting (every 2 seconds)
+            // Enemy shooting
             const now = Date.now();
-            if (now - lastEnemyShot > 2000 && enemies.length > 0) {
-                const shooter = enemies[Math.floor(Math.random() * enemies.length)];
-                enemyBullets.push({ x: shooter.x, y: shooter.y, dx: -5 });
-                lastEnemyShot = now;
-            }
+            enemies.forEach(e => {
+                const shotInterval = e.type === 'shooter' ? 4000 : 8000;
+                if (now - e.lastShot > shotInterval && (e.type === 'shooter' || Math.random() < 0.3)) {
+                    enemyBullets.push({ x: e.x, y: e.y, dx: -5 });
+                    e.lastShot = now;
+                }
+            });
 
             // Update enemy bullets
             enemyBullets.forEach(b => b.x += b.dx);
@@ -118,7 +148,7 @@
             }
             if (divingEnemy) {
                 divingEnemy.x -= 3;
-                divingEnemy.y += Math.sin(divingEnemy.x * 0.05) * 3; // Wavy dive
+                divingEnemy.y += Math.sin(divingEnemy.x * 0.05) * 3;
                 if (Math.hypot(player.x - divingEnemy.x, player.y - divingEnemy.y) < 30) {
                     gameOver = true;
                     gameOverText.textContent = 'Game Over';
@@ -129,7 +159,7 @@
             // Update powerups
             powerups.forEach((p, i) => {
                 if (Math.hypot(player.x - p.x, player.y - p.y) < 30) {
-                    player.bullets = 2; // Upgrade to 2 scattering bullets
+                    player.bullets = 2;
                     powerups.splice(i, 1);
                 }
             });
@@ -137,13 +167,13 @@
             // Player bullet-enemy collision
             bullets.forEach((b, bi) => {
                 enemies.forEach((e, ei) => {
-                    if (Math.hypot(b.x - e.x, b.y - e.y) < 20) {
+                    if (Math.hypot(b.x - e.x, b.y - e.y) < e.size / 2) {
                         enemies.splice(ei, 1);
                         bullets.splice(bi, 1);
                         score += 10000;
                     }
                 });
-                if (divingEnemy && Math.hypot(b.x - divingEnemy.x, b.y - divingEnemy.y) < 20) {
+                if (divingEnemy && Math.hypot(b.x - divingEnemy.x, b.y - divingEnemy.y) < divingEnemy.size / 2) {
                     divingEnemy = null;
                     bullets.splice(bi, 1);
                     score += 10000;
@@ -165,6 +195,8 @@
             if (enemies.length === 0 && !divingEnemy) {
                 gameOver = true;
                 gameOverText.textContent = 'You Win!';
+                nextLevelBtn.style.display = 'inline';
+                restartBtn.style.display = 'none';
             }
         }
 
@@ -178,11 +210,15 @@
             }
 
             // Draw player
-            ctx.drawImage(heroImg, player.x - 25, player.y - 25, 50, 50);
+            if (gameStarted) ctx.drawImage(heroImg, player.x - 25, player.y - 25, 50, 50);
 
-            // Draw enemies
-            enemies.forEach(e => ctx.drawImage(enemyImg, e.x - 20, e.y - 20, 40, 40));
-            if (divingEnemy) ctx.drawImage(enemyImg, divingEnemy.x - 20, divingEnemy.y - 20, 40, 40);
+            // Draw enemies (no tinting)
+            enemies.forEach(e => {
+                ctx.drawImage(e.img, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+            });
+            if (divingEnemy) {
+                ctx.drawImage(divingEnemy.img, divingEnemy.x - divingEnemy.size / 2, divingEnemy.y - divingEnemy.size / 2, divingEnemy.size, divingEnemy.size);
+            }
 
             // Draw player bullets
             bullets.forEach(b => ctx.drawImage(bulletImg, b.x - 5, b.y - 5, 10, 10));
@@ -193,14 +229,24 @@
             // Draw powerups
             powerups.forEach(p => ctx.drawImage(bulletImg, p.x - 15, p.y - 15, 30, 30));
 
-            // Draw score
+            // Draw score and level
             ctx.fillStyle = 'white';
             ctx.font = '20px Arial';
             ctx.fillText(`Score: $${score.toLocaleString()}`, 10, 30);
+            ctx.fillText(`Level: ${level + 1} (${enemyTypes[level % enemyTypes.length].type})`, 10, 60);
 
-            // Game over screen
+            // Show menu or game over screen
+            if (!gameStarted) menuScreen.style.display = 'block';
+            else menuScreen.style.display = 'none';
             if (gameOver) gameOverScreen.style.display = 'block';
             else gameOverScreen.style.display = 'none';
+        }
+
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            music.play().catch(e => console.error('Music error:', e));
+            initEnemies();
         }
 
         function resetGame() {
@@ -211,10 +257,27 @@
             powerups = [];
             score = 0;
             gameOver = false;
+            gameStarted = false;
             lastEnemyShot = 0;
             divingEnemy = null;
-            initEnemies();
-            music.play().catch(e => console.error('Music error:', e));
+            level = 0;
+            nextLevelBtn.style.display = 'none';
+            restartBtn.style.display = 'inline';
+        }
+
+        function nextLevel() {
+            player = { x: 50, y: 300, bullets: 1 };
+            enemies = [];
+            bullets = [];
+            enemyBullets = [];
+            powerups = [];
+            gameOver = false;
+            gameStarted = false;
+            lastEnemyShot = 0;
+            divingEnemy = null;
+            level++;
+            nextLevelBtn.style.display = 'none';
+            restartBtn.style.display = 'inline';
         }
 
         function gameLoop() {
@@ -225,19 +288,21 @@
 
         // Load all assets before starting
         let assetsLoaded = 0;
-        const totalAssets = 3;
+        const totalAssets = 5;
 
         function assetLoaded() {
             assetsLoaded++;
             if (assetsLoaded === totalAssets) {
-                console.log('All assets loaded, starting game...');
-                resetGame();
+                console.log('All assets loaded, showing menu...');
+                menuScreen.style.display = 'block';
                 gameLoop();
             }
         }
 
         heroImg.onload = assetLoaded; heroImg.onerror = () => console.error('Failed to load hero.png');
         enemyImg.onload = assetLoaded; enemyImg.onerror = () => console.error('Failed to load enemy.png');
+        enemy1Img.onload = assetLoaded; enemy1Img.onerror = () => console.error('Failed to load enemy1.png');
+        enemy2Img.onload = assetLoaded; enemy2Img.onerror = () => console.error('Failed to load enemy2.png');
         bulletImg.onload = assetLoaded; bulletImg.onerror = () => console.error('Failed to load bullet.png');
     </script>
 </body>
