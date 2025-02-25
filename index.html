@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doodle Invaders</title>
+    <style>
+        canvas { border: 1px solid black; background: #000033; }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #000; color: white; font-family: Arial, sans-serif; }
+        #game-over { position: absolute; text-align: center; display: none; }
+        #restart-btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; border: none; color: white; }
+        #restart-btn:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="game-over">
+        <h1 id="game-over-text">Game Over</h1>
+        <button id="restart-btn" onclick="resetGame()">Restart</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('game-over');
+        const gameOverText = document.getElementById('game-over-text');
+
+        // Load assets
+        const heroImg = new Image(); heroImg.src = 'hero.png';
+        const enemyImg = new Image(); enemyImg.src = 'enemy.png';
+        const bulletImg = new Image(); bulletImg.src = 'bullet.png';
+        const bulletSound = new Audio('bullet.wav');
+        const music = new Audio('music.wav'); music.loop = true; music.volume = 0.3;
+
+        // Game state
+        let player = { x: 50, y: 300, bullets: 1 };
+        let enemies = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let powerups = [];
+        let score = 0;
+        let gameOver = false;
+        const totalEnemies = 20;
+        let lastEnemyShot = 0;
+        let divingEnemy = null;
+
+        // Controls
+        let keys = {};
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function initEnemies() {
+            for (let i = 0; i < 9; i++) { // 9 rows
+                for (let j = 0; j < 5; j++) { // 5 columns
+                    enemies.push({ x: 600 + j * 50, y: 100 + i * 50, speed: 0.7 });
+                }
+            }
+        }
+
+        function spawnPowerup() {
+            if (Math.random() < 0.005) powerups.push({ x: Math.random() * 600 + 100, y: Math.random() * 550 + 25 });
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            // Player movement
+            if (keys['ArrowUp']) player.y = Math.max(player.y - 5, 25);
+            if (keys['ArrowDown']) player.y = Math.min(player.y + 5, 575);
+            if (keys['ArrowLeft']) player.x = Math.max(player.x - 5, 25);
+            if (keys['ArrowRight']) player.x = Math.min(player.x + 5, 775);
+
+            // Shooting
+            if (keys[' '] && !keys['spaceHeld']) {
+                if (player.bullets === 1) {
+                    bullets.push({ x: player.x + 25, y: player.y, dx: 7 });
+                } else {
+                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: -0.5 }); // Scatter up
+                    bullets.push({ x: player.x + 25, y: player.y, dx: 7, dy: 0.5 });  // Scatter down
+                }
+                bulletSound.play().catch(e => console.error('Bullet sound error:', e));
+                keys['spaceHeld'] = true;
+            }
+            if (!keys[' ']) keys['spaceHeld'] = false;
+
+            // Update player bullets
+            bullets.forEach(b => { b.x += b.dx; b.y += (b.dy || 0); });
+            bullets = bullets.filter(b => b.x <= 800);
+
+            // Update enemies
+            enemies.forEach(e => {
+                e.x -= e.speed;
+                if (e.x < 0) {
+                    gameOver = true;
+                    gameOverText.textContent = 'Game Over';
+                }
+                // Check collision with hero
+                if (Math.hypot(player.x - e.x, player.y - e.y) < 30) {
+                    gameOver = true;
+                    gameOverText.textContent = 'Game Over';
+                }
+            });
+
+            // Enemy shooting (every 2 seconds)
+            const now = Date.now();
+            if (now - lastEnemyShot > 2000 && enemies.length > 0) {
+                const shooter = enemies[Math.floor(Math.random() * enemies.length)];
+                enemyBullets.push({ x: shooter.x, y: shooter.y, dx: -5 });
+                lastEnemyShot = now;
+            }
+
+            // Update enemy bullets
+            enemyBullets.forEach(b => b.x += b.dx);
+            enemyBullets = enemyBullets.filter(b => b.x >= 0);
+
+            // Diving enemy
+            if (!divingEnemy && Math.random() < 0.005 && enemies.length > 0) {
+                const idx = Math.floor(Math.random() * enemies.length);
+                divingEnemy = enemies.splice(idx, 1)[0];
+                divingEnemy.diving = true;
+            }
+            if (divingEnemy) {
+                divingEnemy.x -= 3;
+                divingEnemy.y += Math.sin(divingEnemy.x * 0.05) * 3; // Wavy dive
+                if (Math.hypot(player.x - divingEnemy.x, player.y - divingEnemy.y) < 30) {
+                    gameOver = true;
+                    gameOverText.textContent = 'Game Over';
+                }
+                if (divingEnemy.x < 0) divingEnemy = null;
+            }
+
+            // Update powerups
+            powerups.forEach((p, i) => {
+                if (Math.hypot(player.x - p.x, player.y - p.y) < 30) {
+                    player.bullets = 2; // Upgrade to 2 scattering bullets
+                    powerups.splice(i, 1);
+                }
+            });
+
+            // Player bullet-enemy collision
+            bullets.forEach((b, bi) => {
+                enemies.forEach((e, ei) => {
+                    if (Math.hypot(b.x - e.x, b.y - e.y) < 20) {
+                        enemies.splice(ei, 1);
+                        bullets.splice(bi, 1);
+                        score += 10000;
+                    }
+                });
+                if (divingEnemy && Math.hypot(b.x - divingEnemy.x, b.y - divingEnemy.y) < 20) {
+                    divingEnemy = null;
+                    bullets.splice(bi, 1);
+                    score += 10000;
+                }
+            });
+
+            // Enemy bullet-player collision
+            enemyBullets.forEach(b => {
+                if (Math.hypot(player.x - b.x, player.y - b.y) < 25) {
+                    gameOver = true;
+                    gameOverText.textContent = 'Game Over';
+                }
+            });
+
+            // Spawn powerups
+            spawnPowerup();
+
+            // Win condition
+            if (enemies.length === 0 && !divingEnemy) {
+                gameOver = true;
+                gameOverText.textContent = 'You Win!';
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, 800, 600);
+
+            // Draw stars
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 50; i++) {
+                ctx.fillRect(Math.random() * 800, Math.random() * 600, 2, 2);
+            }
+
+            // Draw player
+            ctx.drawImage(heroImg, player.x - 25, player.y - 25, 50, 50);
+
+            // Draw enemies
+            enemies.forEach(e => ctx.drawImage(enemyImg, e.x - 20, e.y - 20, 40, 40));
+            if (divingEnemy) ctx.drawImage(enemyImg, divingEnemy.x - 20, divingEnemy.y - 20, 40, 40);
+
+            // Draw player bullets
+            bullets.forEach(b => ctx.drawImage(bulletImg, b.x - 5, b.y - 5, 10, 10));
+
+            // Draw enemy bullets
+            enemyBullets.forEach(b => ctx.fillRect(b.x - 3, b.y - 3, 6, 6));
+
+            // Draw powerups
+            powerups.forEach(p => ctx.drawImage(bulletImg, p.x - 15, p.y - 15, 30, 30));
+
+            // Draw score
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: $${score.toLocaleString()}`, 10, 30);
+
+            // Game over screen
+            if (gameOver) gameOverScreen.style.display = 'block';
+            else gameOverScreen.style.display = 'none';
+        }
+
+        function resetGame() {
+            player = { x: 50, y: 300, bullets: 1 };
+            enemies = [];
+            bullets = [];
+            enemyBullets = [];
+            powerups = [];
+            score = 0;
+            gameOver = false;
+            lastEnemyShot = 0;
+            divingEnemy = null;
+            initEnemies();
+            music.play().catch(e => console.error('Music error:', e));
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Load all assets before starting
+        let assetsLoaded = 0;
+        const totalAssets = 3;
+
+        function assetLoaded() {
+            assetsLoaded++;
+            if (assetsLoaded === totalAssets) {
+                console.log('All assets loaded, starting game...');
+                resetGame();
+                gameLoop();
+            }
+        }
+
+        heroImg.onload = assetLoaded; heroImg.onerror = () => console.error('Failed to load hero.png');
+        enemyImg.onload = assetLoaded; enemyImg.onerror = () => console.error('Failed to load enemy.png');
+        bulletImg.onload = assetLoaded; bulletImg.onerror = () => console.error('Failed to load bullet.png');
+    </script>
+</body>
+</html>
