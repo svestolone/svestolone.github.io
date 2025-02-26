@@ -88,8 +88,8 @@
 
         // Enemy types with base values
         const enemyTypes = [
-            { type: 'standard', baseSpeed: 1, size: 40, img: enemyImg },
-            { type: 'fast', baseSpeed: 2, size: 35, img: enemy1Img },
+            { type: 'standard', baseSpeed: 0.3, size: 40, img: enemyImg },
+            { type: 'fast', baseSpeed: 0.4, size: 35, img: enemy1Img },
             { type: 'shooter', baseSpeed: 0.5, size: 45, img: enemy2Img }
         ];
         const baseShotChance = 0.005;
@@ -105,7 +105,7 @@
             for (let i = 0; i < 9; i++) {
                 for (let j = 0; j < 3; j++) {
                     enemies.push({
-                        x: 550 + j * 60,
+                        x: 650 + j * 60,
                         y: 50 + i * 60,
                         speed: currentType.baseSpeed * difficultyMultiplier,
                         size: currentType.size,
@@ -191,8 +191,9 @@
                 const shotInterval = e.type === 'shooter' ? 500 : 2000;
                 const shotChance = baseShotChance * difficultyMultiplier;
                 if (now - e.lastShot > shotInterval && Math.random() < shotChance) {
-                    enemyBullets.push({ x: e.x, y: e.y, dx: -5 });
-                    e.lastShot = now;
+                const bulletSpeed = e.type === 'shooter' ? -7 : -5; // Faster for Shooter
+                enemyBullets.push({ x: e.x, y: e.y, dx: bulletSpeed });
+                e.lastShot = now;
                 }
             });
 
