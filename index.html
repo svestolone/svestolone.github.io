@@ -52,7 +52,7 @@
         let score = 0;
         let gameOver = false;
         let gameStarted = false;
-        const totalEnemies = 20;
+        const totalEnemies = 27; // 9 rows x 3 columns
         let lastEnemyShot = 0;
         let divingEnemy = null;
         let level = 0; // 0: Standard, 1: Fast, 2: Shooter
@@ -84,25 +84,32 @@
             touchActive = false;
         });
 
-        // Enemy types
+        // Enemy types with base values
         const enemyTypes = [
-            { type: 'standard', speed: 0.3, size: 35, img: enemyImg },
-            { type: 'fast', speed: 0.5, size: 35, img: enemy1Img },
-            { type: 'shooter', speed: 0.5, size: 45, img: enemy2Img }
+            { type: 'standard', baseSpeed: 0.25, size: 40, img: enemyImg },
+            { type: 'fast', baseSpeed: 0.35, size: 35, img: enemy1Img },
+            { type: 'shooter', baseSpeed: 0.4, size: 45, img: enemy2Img }
         ];
+        const baseShotChance = 0.0025; // Base shooting probability
+
+        function getDifficultyMultiplier() {
+            const cycle = Math.floor(level / 3); // Every 3 levels
+            return 1 + (cycle * 0.5); // 50% increase per cycle
+        }
 
         function initEnemies() {
             const currentType = enemyTypes[level % enemyTypes.length];
-            for (let i = 0; i < 9; i++) {
-                for (let j = 0; j < 3; j++) {
+            const difficultyMultiplier = getDifficultyMultiplier();
+            for (let i = 0; i < 9; i++) { // 9 rows
+                for (let j = 0; j < 3; j++) { // 3 columns
                     enemies.push({
-                        x: 600 + j * 50,
-                        y: 100 + i * 50,
-                        speed: currentType.speed,
+                        x: 650 + j * 60, // Adjusted for fewer columns, fits in 800px
+                        y: 50 + i * 60,  // Spaced out for 9 rows in 600px
+                        speed: currentType.baseSpeed * difficultyMultiplier,
                         size: currentType.size,
                         type: currentType.type,
                         img: currentType.img,
-                        lastShot: Math.random() * 2000 // Stagger initial shots
+                        lastShot: Math.random() * 2000
                     });
                 }
             }
@@ -115,7 +122,9 @@
         }
 
         function spawnPowerup() {
-            if (Math.random() < 0.01) powerups.push({ x: Math.random() * 600 + 50, y: Math.random() * 500 + 25 });
+            if (powerups.length < 5 && Math.random() < 0.005) { // Cap at 5, reduced chance
+        	powerups.push({ x: Math.random() * 600 + 100, y: Math.random() * 550 + 25 });
+		}
         }
 
         function update() {
@@ -131,7 +140,7 @@
             if (touchActive) {
                 const dx = touchX - player.x;
                 const dy = touchY - player.y;
-                player.x += dx * 0.1; // Smooth movement
+                player.x += dx * 0.1;
                 player.y += dy * 0.1;
                 player.x = Math.max(25, Math.min(775, player.x));
                 player.y = Math.max(25, Math.min(575, player.y));
@@ -168,11 +177,13 @@
                 }
             });
 
-            // Enemy shooting (random, 2-second interval)
+            // Enemy shooting with progressive difficulty
             const now = Date.now();
+            const difficultyMultiplier = getDifficultyMultiplier();
             enemies.forEach(e => {
-                const shotInterval = e.type === 'shooter' ? 1000 : 2000;
-                if (now - e.lastShot > shotInterval && Math.random() < 0.005) { // 5% chance per frame
+                const shotInterval = e.type === 'shooter' ? 500 : 2000;
+                const shotChance = baseShotChance * difficultyMultiplier;
+                if (now - e.lastShot > shotInterval && Math.random() < shotChance) {
                     enemyBullets.push({ x: e.x, y: e.y, dx: -5 });
                     e.lastShot = now;
                 }
@@ -187,9 +198,10 @@
                 const idx = Math.floor(Math.random() * enemies.length);
                 divingEnemy = enemies.splice(idx, 1)[0];
                 divingEnemy.diving = true;
+                divingEnemy.speed = 3 * difficultyMultiplier; // Diving speed also increases
             }
             if (divingEnemy) {
-                divingEnemy.x -= 3;
+                divingEnemy.x -= divingEnemy.speed;
                 divingEnemy.y += Math.sin(divingEnemy.x * 0.05) * 3;
                 if (Math.hypot(player.x - divingEnemy.x, player.y - divingEnemy.y) < 30) {
                     gameOver = true;
