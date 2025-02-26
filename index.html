@@ -192,9 +192,9 @@
                 const shotInterval = e.type === 'shooter' ? 500 : 2000;
                 const shotChance = baseShotChance * difficultyMultiplier;
                 if (now - e.lastShot > shotInterval && Math.random() < shotChance) {
-        const bulletSpeed = e.type === 'shooter' ? -7 : -5; // Faster for Shooter
-        enemyBullets.push({ x: e.x, y: e.y, dx: bulletSpeed });
-        e.lastShot = now;
+                const bulletSpeed = e.type === 'shooter' ? -7 : -5; // Faster for Shooter
+                    enemyBullets.push({ x: e.x, y: e.y, dx: bulletSpeed });
+                    e.lastShot = now;
                 }
             });
 
