@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastermind Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #a99f61; /* Updated background color */
+        }
+        #game-board {
+            background-image: url('board.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            width: 450px; /* Updated width */
+            height: 510px; /* Updated height */
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .guess-row {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            left: 50px; /* Adjust based on your board.png layout */
+            bottom: 10px; /* Start from bottom */
+        }
+        .gem {
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .peg {
+            width: 20px;
+            height: 20px;
+            margin: 2px;
+        }
+        #gem-selection {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            width: 450px; /* Match the board width */
+        }
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .feedback-section {
+            margin-left: 20px;
+            display: flex;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mastermind Game</h1>
+    <div id="game-board"></div>
+    <div id="gem-selection">
+        <img src="red.png" class="gem" onclick="selectGem('red')">
+        <img src="orange.png" class="gem" onclick="selectGem('orange')">
+        <img src="yellow.png" class="gem" onclick="selectGem('yellow')">
+        <img src="green.png" class="gem" onclick="selectGem('green')">
+        <img src="blue.png" class="gem" onclick="selectGem('blue')">
+        <img src="violet.png" class="gem" onclick="selectGem('violet')">
+    </div>
+    <div class="button-group">
+        <button onclick="submitGuess()">Submit Guess</button>
+        <button onclick="unselectGem()">Unselect Gem</button>
+        <button onclick="newGame()">New Game</button>
+    </div>
+    <div id="message"></div>
+
+    <script>
+        let secretCode = generateSecretCode();
+        let currentGuess = [];
+        const maxGuesses = 10;
+        let guessCount = 0;
+        let guessRows = [];
+
+        function generateSecretCode() {
+            const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'violet'];
+            const code = [];
+            for (let i = 0; i < 4; i++) {
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                code.push(randomColor);
+            }
+            console.log("Secret Code:", code); // Fixed to log the new code
+            return code;
+        }
+
+        function selectGem(color) {
+            console.log("Gem clicked:", color);
+            if (currentGuess.length < 4 && (guessCount < maxGuesses || guessRows.length === 0)) {
+                // Only allow selection if game is ongoing or new game just started
+                currentGuess.push(color);
+                console.log("Current Guess:", currentGuess);
+                updateBoard();
+            } else {
+                console.log("Cannot select more gems: Guess limit reached or game ended.");
+            }
+        }
+
+        function unselectGem() {
+            if (currentGuess.length > 0 && (guessCount < maxGuesses || guessRows.length === 0)) {
+                currentGuess.pop();
+                console.log("Gem unselected. Current Guess:", currentGuess);
+                updateBoard();
+                document.getElementById('message').textContent = `Guess ${guessCount + 1}: Select your gems.`;
+            } else {
+                document.getElementById('message').textContent = 'No gems to unselect or game ended!';
+            }
+        }
+
+        function newGame() {
+            secretCode = generateSecretCode();
+            currentGuess = [];
+            guessCount = 0;
+            guessRows = [];
+            updateBoard();
+            document.getElementById('message').textContent = 'New game started! Guess 1: Select your gems.';
+        }
+
+        function updateBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            guessRows.forEach((row, index) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'guess-row';
+                rowDiv.style.bottom = `${10 + index * 50}px`;
+
+                row.guess.forEach(color => {
+                    const img = document.createElement('img');
+                    img.src = `${color}.png`;
+                    img.className = 'gem';
+                    rowDiv.appendChild(img);
+                });
+
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'feedback-section';
+                row.feedback.forEach(peg => {
+                    if (peg !== 'none') {
+                        const pegImg = document.createElement('img');
+                        pegImg.src = `${peg}.png`;
+                        pegImg.className = 'peg';
+                        feedbackDiv.appendChild(pegImg);
+                    }
+                });
+                rowDiv.appendChild(feedbackDiv);
+                board.appendChild(rowDiv);
+            });
+
+            if (currentGuess.length > 0 && (guessCount < maxGuesses || guessRows.length === 0)) {
+                const currentRow = document.createElement('div');
+                currentRow.className = 'guess-row';
+                currentRow.style.bottom = `${10 + guessCount * 50}px`;
+
+                currentGuess.forEach(color => {
+                    const img = document.createElement('img');
+                    img.src = `${color}.png`;
+                    img.className = 'gem';
+                    currentRow.appendChild(img);
+                });
+                board.appendChild(currentRow);
+            }
+        }
+
+        function submitGuess() {
+            if (currentGuess.length !== 4) {
+                document.getElementById('message').textContent = 'Please select exactly 4 gems!';
+                return;
+            }
+
+            if (guessCount >= maxGuesses) {
+                document.getElementById('message').textContent = `Game Over! The code was ${secretCode.join(', ')}.`;
+                return;
+            }
+
+            const feedback = checkGuess(currentGuess, secretCode);
+            guessRows.push({ guess: [...currentGuess], feedback: feedback });
+            guessCount++;
+
+            updateBoard();
+
+            if (feedback.every(p => p === 'black')) {
+                document.getElementById('message').textContent = `You won! The code was ${secretCode.join(', ')}!`;
+                return;
+            } else if (guessCount === maxGuesses) {
+                document.getElementById('message').textContent = `Game Over! The code was ${secretCode.join(', ')}.`;
+                return;
+            }
+
+            currentGuess = [];
+            document.getElementById('message').textContent = `Guess ${guessCount + 1}: Select your gems.`;
+        }
+
+        function checkGuess(guess, code) {
+            let feedback = [];
+            let copyCode = [...code];
+            let copyGuess = [...guess];
+
+            for (let i = 0; i < 4; i++) {
+                if (copyGuess[i] === copyCode[i]) {
+                    feedback.push('black');
+                    copyCode[i] = null;
+                    copyGuess[i] = null;
+                }
+            }
+
+            for (let i = 0; i < 4; i++) {
+                if (copyGuess[i] !== null) {
+                    const index = copyCode.indexOf(copyGuess[i]);
+                    if (index !== -1) {
+                        feedback.push('white');
+                        copyCode[index] = null;
+                        copyGuess[i] = null;
+                    }
+                }
+            }
+
+            while (feedback.length < 4) {
+                feedback.push('none');
+            }
+
+            feedback.sort((a, b) => (a === 'black' ? -1 : b === 'white' ? 0 : 1));
+            return feedback;
+        }
+    </script>
+</body>
+</html>
