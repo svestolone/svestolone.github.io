@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minefield Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #a99f61;
+        }
+        #game-board {
+            width: 150px; /* 3 squares * 50px each */
+            height: 500px; /* 10 rows * 50px each */
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        .row {
+            display: flex;
+            position: absolute;
+            width: 150px;
+            height: 50px;
+        }
+        .square {
+            width: 50px;
+            height: 50px;
+            margin: 0;
+            cursor: pointer;
+            background-image: url('square.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .safe {
+            background-image: url('safe.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .mine {
+            background-image: url('mine.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .selected {
+            border: 2px solid green;
+        }
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        #message, .button-group {
+            margin: 20px 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Minefield Game</h1>
+    <div id="game-board"></div>
+    <div id="message"></div>
+    <div class="button-group">
+        <button onclick="newGame()">New Game</button>
+    </div>
+
+    <script>
+        const rows = 10;
+        const cols = 3;
+        let gameBoard = [];
+        let currentRow = rows - 1; // Start at the bottom row (row 10)
+
+        function initializeGame() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+
+            // Initialize game board with random mines (e.g., 5 mines total)
+            gameBoard = Array(rows).fill().map(() => Array(cols).fill(false));
+            let mineCount = 0;
+            const totalMines = 5; // Adjustable number of mines
+            while (mineCount < totalMines) {
+                const row = Math.floor(Math.random() * rows);
+                const col = Math.floor(Math.random() * cols);
+                if (!gameBoard[row][col]) {
+                    gameBoard[row][col] = true;
+                    mineCount++;
+                }
+            }
+
+            // Render the board
+            for (let i = 0; i < rows; i++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+                rowDiv.style.bottom = `${(rows - 1 - i) * 50}px`; // Position from bottom
+                for (let j = 0; j < cols; j++) {
+                    const squareDiv = document.createElement('div');
+                    squareDiv.className = 'square';
+                    squareDiv.dataset.row = i;
+                    squareDiv.dataset.col = j;
+                    squareDiv.onclick = () => selectSquare(i, j);
+                    if (i > currentRow) {
+                        squareDiv.classList.add('disabled'); // Disable rows above current
+                    }
+                    rowDiv.appendChild(squareDiv);
+                }
+                board.appendChild(rowDiv);
+            }
+        }
+
+        function selectSquare(row, col) {
+            if (row > currentRow || row < 0) return; // Prevent selection of invalid rows
+
+            const square = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            square.classList.add('selected');
+            square.onclick = null; // Disable further clicks on this square
+
+            if (gameBoard[row][col]) {
+                // Hit a mine
+                square.classList.add('mine');
+                document.getElementById('message').textContent = 'You perished! Game Over!';
+                disableBoard();
+            } else {
+                // Safe move
+                square.classList.add('safe');
+                currentRow--;
+                if (currentRow < 0) {
+                    document.getElementById('message').textContent = 'Congratulations! You won!';
+                    disableBoard();
+                } else {
+                    document.getElementById('message').textContent = `Step ${rows - currentRow}: Select a square in row ${currentRow + 1}.`;
+                    updateBoardState();
+                }
+            }
+        }
+
+        function updateBoardState() {
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                const row = parseInt(square.dataset.row);
+                if (row > currentRow) {
+                    square.classList.add('disabled');
+                } else if (!square.classList.contains('selected')) {
+                    square.classList.remove('disabled');
+                }
+            });
+        }
+
+        function disableBoard() {
+            const squares = document.querySelectorAll('.square');
+            squares.forEach(square => {
+                square.onclick = null;
+                if (!square.classList.contains('selected')) {
+                    square.classList.add('disabled');
+                }
+            });
+        }
+
+        function newGame() {
+            currentRow = rows - 1;
+            gameBoard = [];
+            initializeGame();
+            document.getElementById('message').textContent = `Step 1: Select a square in row ${currentRow + 1}.`;
+        }
+
+        // Start the game
+        newGame();
+    </script>
+</body>
+</html>
