@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virus Game – Game Master Console</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --panel:#111827; /* gray-900 */
+      --muted:#94a3b8; /* slate-400 */
+      --text:#e5e7eb; /* gray-200 */
+      --accent:#22d3ee; /* cyan-400 */
+      --accent2:#60a5fa; /* blue-400 */
+      --danger:#ef4444; /* red-500 */
+      --ok:#10b981; /* emerald-500 */
+      --warn:#f59e0b; /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1022,#0f172a 40%,#0b1022);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    h1,h2,h3{margin:8px 0}
+    .container{max-width:1200px;margin:16px auto;padding:0 16px}
+    .grid{display:grid;gap:12px}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .toolbar, .panel{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);backdrop-filter: blur(8px); border-radius:16px; padding:12px}
+    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    label{font-size:12px;color:var(--muted)}
+    input[type="number"],select,button{border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:#0b1326;color:var(--text);padding:8px 10px}
+    input[type="checkbox"]{transform:translateY(2px)}
+    button{cursor:pointer}
+    button.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#00131a;border:none;font-weight:700}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.18)}
+    button.warn{background:var(--warn);color:#1a1200;border:none;font-weight:700}
+    button.danger{background:var(--danger);color:#fff;border:none;font-weight:700}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);font-size:12px}
+    .roles-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+
+    /* Card layout */
+    .role-card{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.12);background:#0a0f20;aspect-ratio:1/1}
+    /* Number image (png) is full-bleed base layer */
+    .role-card img.num{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;z-index:0}
+    /* Role art full-bleed cover overlay */
+    .role-card img.role-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.6;pointer-events:none;z-index:1}
+
+    .role-card .badge{position:absolute;top:8px;left:8px;font-size:12px;background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);z-index:4}
+    .role-card .meta{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.8));padding:8px 10px;font-size:12px;z-index:3}
+
+    .role{font-weight:700}
+    .muted{color:var(--muted)}
+    .flex{display:flex;gap:10px;align-items:center}
+    .stack{display:flex;flex-direction:column;gap:8px}
+    .split{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+    .list{border-radius:12px;border:1px solid rgba(255,255,255,0.12);overflow:hidden}
+    .list .row{display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .list .row:last-child{border-bottom:none}
+    .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .kpi .card{border-radius:14px;border:1px solid rgba(255,255,255,0.12);padding:12px;background:#0a0f20}
+    .kpi .value{font-size:24px;font-weight:800}
+    .divider{height:1px;background:rgba(255,255,255,0.08);margin:8px 0}
+    .callout{border-left:4px solid var(--accent);padding:8px 12px;background:rgba(34,211,238,0.08);border-radius:8px}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .small{font-size:12px}
+    .scroll{max-height:280px;overflow:auto}
+    .sticky{position:sticky;top:8px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal .sheet{background:#0a0f20;border:1px solid rgba(255,255,255,0.18);border-radius:16px;max-width:720px;width:100%;padding:16px}
+    @media (max-width:1100px){
+      .split{grid-template-columns:1fr}
+      .roles-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    }
+    @media (max-width:700px){
+      .roles-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .grid.cols-3{grid-template-columns:1fr}
+      .grid.cols-2{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🦠 Virus Game – <span class="muted">Game Master Console</span></h1>
+    <div class="toolbar">
+      <div class="pill">Round: <strong id="roundNo" class="mono" style="margin-left:6px">0</strong></div>
+      <div class="pill">Timer: <strong id="timerLbl" class="mono" style="margin-left:6px">00:00</strong></div>
+      <label>
+        Players
+        <select id="playerCount">
+          <option>12</option>
+          <option>13</option>
+          <option>14</option>
+          <option>15</option>
+          <option>16</option>
+          <option>17</option>
+          <option>18</option>
+          <option>19</option>
+          <option>20</option>
+        </select>
+      </label>
+      <label>
+        Round length (sec)
+        <input type="number" id="roundSec" value="120" min="10" step="10" />
+      </label>
+      <button class="primary" id="startBtn">Start</button>
+      <button class="ghost" id="pauseBtn">Pause</button>
+      <button class="ghost" id="resetBtn">Reset</button>
+      <button class="ghost" id="applyBtn" title="Apply players & reset">Apply</button>
+      <span class="muted small">(Timer is optional; you still control round transitions.)</span>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:12px">
+      <section class="panel">
+        <div class="flex" style="justify-content:space-between;align-items:center">
+          <h2>🎭 Roles & Setup</h2>
+          <div class="flex">
+            <button class="ghost" id="rerollBtn">Randomise Roles</button>
+            <button class="ghost" id="exportBtn" title="Export save file (.json)">Export</button>
+            <button class="ghost" id="importBtn" title="Import save file (.json)">Import</button>
+          </div>
+        </div>
+        <div class="muted small" id="distText" style="margin-bottom:6px"></div>
+        <div class="roles-grid" id="rolesGrid"></div>
+        <div class="divider"></div>
+        <div class="callout small" id="calloutDistrib"></div>
+      </section>
+
+      <section class="panel split">
+        <div class="stack">
+          <div class="flex" style="justify-content:space-between;align-items:center">
+            <h2>🗳️ End-of-Round Actions</h2>
+            <div class="pill">Calling number: <strong id="callingNo" class="mono">–</strong></div>
+          </div>
+
+          <div id="actionForm" class="stack"></div>
+
+          <div class="flex" style="justify-content:space-between">
+            <div class="flex" style="gap:6px">
+              <button id="prevNo" class="ghost">⬅️ Prev</button>
+              <button id="nextNo" class="ghost">Next ➡️</button>
+            </div>
+            <div class="flex" style="gap:6px">
+              <button id="endRoundBtn" class="primary">End Round & Process</button>
+              <button id="summaryBtn" class="ghost">Show Status</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack sticky">
+          <h3>📊 Scoreboard</h3>
+          <div id="scoreboard" class="list scroll"></div>
+          <h3>📜 Log</h3>
+          <div id="log" class="list scroll"></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top:12px">
+      <h2>ℹ️ Between-Rounds Summary</h2>
+      <div class="kpi">
+        <div class="card">
+          <div class="muted small">Research Progress</div>
+          <div class="value" id="kpiResearch">0%</div>
+          <div class="small" id="kpiResearchDetail">0/2 successful interactions with Antibodies</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Currently Infected</div>
+          <div class="value" id="kpiInfected">0</div>
+          <div class="small" id="kpiInfectedDetail">Players infected at end of last round</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Virus Deaths (last round)</div>
+          <div class="value" id="kpiVirusDeaths">0</div>
+          <div class="small" id="kpiVirusDeathsDetail">Numbers listed below</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="small" id="virusDeathsList">No virus deaths yet.</div>
+    </section>
+  </div>
+
+  <div class="modal" id="summaryModal" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h2>Round <span id="modalRound">0</span> Summary</h2>
+      <div class="kpi" style="margin-top:8px">
+        <div class="card">
+          <div class="muted small">Research Progress</div>
+          <div class="value" id="mResearch">0%</div>
+          <div class="small" id="mResearchDetail">0/2</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Currently Infected</div>
+          <div class="value" id="mInfected">0</div>
+          <div class="small" id="mInfectedDetail">numbers hidden from players</div>
+        </div>
+        <div class="card">
+          <div class="muted small">Virus Deaths</div>
+          <div class="value" id="mVirusDeaths">0</div>
+          <div class="small" id="mVirusDeathsDetail">list below</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div id="mVirusDeathsList" class="small">–</div>
+      <div class="flex" style="justify-content:flex-end;margin-top:12px">
+        <button class="primary" onclick="hideModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /***********************
+   * Utility helpers     *
+   ***********************/
+  const ROLES = {
+    TERRORIST:"Terrorist",
+    RESEARCHER:"Researcher",
+    OFFICER:"Officer",
+    JOURNALIST:"Journalist",
+    FANATIC:"Fanatic",
+    CITIZEN:"Citizen",
+  };
+  const ROLE_IMAGE = {
+    Terrorist: 'terrorist.jpg',
+    Researcher: 'researcher.jpg',
+    Officer: 'officer.jpg',
+    Journalist: 'journalist.jpg',
+    Fanatic: 'fanatic.jpg',
+    Citizen: 'citizen.jpg'
+  };
+
+  function el(id){return document.getElementById(id)}
+  function formatTimer(s){ const m = Math.floor(s/60).toString().padStart(2,'0'); const r = (s%60).toString().padStart(2,'0'); return `${m}:${r}` }
+  function randPick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
+  function mod1(i){ const N = state.N; let x = ((i-1)%N+N)%N+1; return x; }
+  function neighbours(i){ return [mod1(i-1), mod1(i+1)]; }
+
+  /***********************
+   * Core game state     *
+   ***********************/
+  const state = {
+    N: 12,
+    round: 0,
+    players: [],
+    antibodiesHolder: null, // number
+    virusSources: [], // {source:number, round:number, cwBlockedAt:null|number, ccwBlockedAt:null|number}
+    actionsThisRound: new Map(), // key:number -> action object by role
+    log: [],
+    lastVirusDeaths: [],
+    cureHits: 0, // 0..2
+    researchAwardedRound: null,
+    journalistFoundTSet: new Set(),
+    journalistFoundOfficer: false,
+    officerKills: [], // track {by:number, round, target, wasT}
+    officerAwarded: new Set(), // set of officer numbers already awarded
+    timer: {len:120, left:120, handle:null, running:false},
+  };
+
+  class Player{
+    constructor(number, role){
+      this.no = number;
+      this.role = role;
+      this.alive = true;
+      this.points = 0;
+      this.infected = false;
+      this.infectionRound = null; // round infected
+      this.immuneAntibodies = false; // single citizen
+      this.antidoteBarrier = false;  // blocks spread through this index
+      // Terrorist-only resources
+      this.hasBullet = role===ROLES.TERRORIST;
+      this.hasAntidote = role===ROLES.TERRORIST;
+      this.canLaunchVirus = role===ROLES.TERRORIST; // once per match
+    }
+  }
+
+  function distributionFor(count){
+    if(count>=16){
+      return {T:3,R:3,O:2,J:1,F:2,C: count-(3+3+2+1+2)};
+    } else {
+      return {T:2,R:2,O:1,J:1,F:1,C: count-(2+2+1+1+1)};
+    }
+  }
+  function buildRolePool(count){
+    const d = distributionFor(count);
+    const pool = [];
+    pool.push(...Array(d.T).fill(ROLES.TERRORIST));
+    pool.push(...Array(d.R).fill(ROLES.RESEARCHER));
+    pool.push(...Array(d.O).fill(ROLES.OFFICER));
+    pool.push(...Array(d.J).fill(ROLES.JOURNALIST));
+    pool.push(...Array(d.F).fill(ROLES.FANATIC));
+    pool.push(...Array(d.C).fill(ROLES.CITIZEN));
+    return pool;
+  }
+
+  function newGame(){
+    state.round = 0;
+    state.players = [];
+    state.virusSources = [];
+    state.actionsThisRound = new Map();
+    state.log = [];
+    state.lastVirusDeaths = [];
+    state.cureHits = 0;
+    state.researchAwardedRound = null;
+    state.journalistFoundTSet = new Set();
+    state.journalistFoundOfficer = false;
+    state.officerKills = [];
+    state.officerAwarded = new Set();
+
+    state.N = parseInt(el('playerCount').value||'12',10);
+    currentCalledNo = 1;
+
+    const count = state.N;
+    const pool = buildRolePool(count);
+    shuffle(pool);
+    for(let i=1;i<=count;i++) state.players.push(new Player(i,pool[i-1]));
+
+    // choose antibodies holder among Citizens only
+    const citizenNos = state.players.filter(p=>p.role===ROLES.CITIZEN).map(p=>p.no);
+    state.antibodiesHolder = randPick(citizenNos);
+    getP(state.antibodiesHolder).immuneAntibodies = true;
+
+    // reset timer
+    state.timer.left = state.timer.len = parseInt(el('roundSec').value||120,10);
+    state.timer.running=false; clearInterval(state.timer.handle); state.timer.handle=null;
+
+    renderAll();
+    log(`New game created for <b>${count}</b> players. Antibodies assigned to <b>#${state.antibodiesHolder}</b> (hidden from players).`);
+  }
+
+  function getP(no){ return state.players[no-1]; }
+
+  /***********************
+   * Rendering           *
+   ***********************/
+  function renderAll(){
+    renderRoundLabels();
+    renderRoles();
+    renderActionForm(currentCalledNo);
+    renderScoreboard();
+    renderLog();
+    updateKPIs();
+  }
+
+  function renderRoundLabels(){
+    el('roundNo').textContent = state.round;
+    el('timerLbl').textContent = formatTimer(state.timer.left);
+    el('callingNo').textContent = currentCalledNo??'–';
+  }
+
+  function renderRoles(){
+    const g = el('rolesGrid');
+    g.innerHTML = '';
+    const d = distributionFor(state.N);
+    el('distText').textContent = `${state.N} players arranged in a circle; ${state.N} is neighbour to 1.`;
+    el('calloutDistrib').innerHTML = `<strong>Distribution:</strong> ${d.T} Terrorist(s), ${d.R} Researcher(s), ${d.O} Officer(s), ${d.J} Journalist, ${d.F} Fanatic(s), ${d.C} Citizen(s). One random Citizen has <em>Antibodies</em> (immune to death by virus but continues spreading).`;
+
+    for(const p of state.players){
+      const card = document.createElement('div');
+      card.className = 'role-card';
+      const nimg = document.createElement('img');
+      nimg.className = 'num';
+      nimg.src = `${p.no}.png`;
+      nimg.alt = `#${p.no}`;
+      nimg.onerror = ()=>{ // graceful fallback
+        nimg.style.display='none';
+        card.style.background='linear-gradient(135deg,#1f2937,#0b1022)';
+        const bigNo=document.createElement('div');
+        bigNo.style.position='absolute'; bigNo.style.inset='0'; bigNo.style.display='flex'; bigNo.style.alignItems='center'; bigNo.style.justifyContent='center'; bigNo.style.fontSize='48px'; bigNo.style.fontWeight='800'; bigNo.style.color='rgba(255,255,255,0.2)';
+        bigNo.textContent = `#${p.no}`; card.appendChild(bigNo);
+      };
+      card.appendChild(nimg);
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.innerHTML = `#${p.no} · <span class="${p.alive? '':'muted'}">${p.alive? 'Alive':'Dead'}</span>${p.infected? ' · 🦠':''}`;
+      card.appendChild(badge);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = `<div class="role">${p.role}${p.antidoteBarrier?' · 🛡️':''}${p.immuneAntibodies?' · 🧬':''}</div>
+                        <div class="muted small">${p.role==='Terrorist'?`🔫 ${p.hasBullet? '1':'0'} · 💉 ${p.hasAntidote? '1':'0'} · 🧪 ${p.canLaunchVirus? '1':'0'}`:''}</div>`;
+      const rimg = document.createElement('img');
+      rimg.className = 'role-img';
+      rimg.src = ROLE_IMAGE[p.role];
+      rimg.alt = p.role;
+      rimg.onerror = ()=>{ log(`Role image not found: <b>${ROLE_IMAGE[p.role]}</b>`); };
+      card.appendChild(rimg);
+      card.appendChild(meta);
+
+      g.appendChild(card);
+    }
+  }
+
+  function renderScoreboard(){
+    const sb = el('scoreboard');
+    const rows = state.players
+      .map(p=>({no:p.no, name:`#${p.no} ${p.role}`, pts:p.points}))
+      .sort((a,b)=> b.pts - a.pts || a.no - b.no)
+      .map(s=>`<div class="row"><div>${s.name}</div><div class="mono">${s.pts} pts</div></div>`).join('');
+    sb.innerHTML = rows || '<div class="row">No scores yet.</div>';
+  }
+
+  function log(html){
+    state.log.unshift({t:new Date(), html});
+    renderLog();
+  }
+  function renderLog(){
+    const L = el('log');
+    L.innerHTML = state.log.map(e=>`<div class="row"><div class="small">${e.t.toLocaleTimeString()}</div><div>${e.html}</div></div>`).join('');
+  }
+
+  function updateKPIs(){
+    const infectedCount = state.players.filter(p=>p.infected && p.alive).length;
+    el('kpiInfected').textContent = infectedCount;
+    el('kpiInfectedDetail').textContent = `${infectedCount} player(s) infected at end of round ${state.round}.`;
+
+    el('kpiResearch').textContent = `${Math.floor((state.cureHits/2)*100)}%`;
+    el('kpiResearchDetail').textContent = `${state.cureHits}/2 successful interactions with antibodies`;
+
+    el('kpiVirusDeaths').textContent = state.lastVirusDeaths.length;
+    el('kpiVirusDeathsDetail').textContent = state.lastVirusDeaths.length? 'Numbers listed below':'No virus deaths last round';
+
+    el('virusDeathsList').innerHTML = state.lastVirusDeaths.length? `Players who died to virus at end of round ${state.round}: <b>#${state.lastVirusDeaths.join(', #')}</b>` : 'No virus deaths yet.';
+  }
+
+  function showModal(){
+    el('modalRound').textContent = state.round;
+    el('mInfected').textContent = state.players.filter(p=>p.infected && p.alive).length;
+    el('mInfectedDetail').textContent = `Count only (no names).`;
+    el('mResearch').textContent = `${Math.floor((state.cureHits/2)*100)}%`;
+    el('mResearchDetail').textContent = `${state.cureHits}/2`;
+    el('mVirusDeaths').textContent = state.lastVirusDeaths.length;
+    el('mVirusDeathsDetail').textContent = `See list below.`;
+    el('mVirusDeathsList').innerHTML = state.lastVirusDeaths.length? `#${state.lastVirusDeaths.join(', #')}` : 'None.';
+    el('summaryModal').style.display='flex';
+  }
+  function hideModal(){ el('summaryModal').style.display='none'; }
+
+  /***********************
+   * Timer               *
+   ***********************/
+  function startTimer(){
+    const s = state.timer;
+    if(s.running) return;
+    s.left = parseInt(el('roundSec').value||120,10);
+    s.len = s.left;
+    s.running = true;
+    s.handle = setInterval(()=>{
+      s.left--; if(s.left<0){ s.left=0; pauseTimer(); } renderRoundLabels();
+    },1000);
+    renderRoundLabels();
+  }
+  function pauseTimer(){ const s = state.timer; s.running=false; clearInterval(s.handle); s.handle=null; renderRoundLabels(); }
+  function resetTimer(){ pauseTimer(); state.timer.left = parseInt(el('roundSec').value||120,10); state.timer.len=state.timer.left; renderRoundLabels(); }
+
+  /***********************
+   * Actions UI          *
+   ***********************/
+  let currentCalledNo = 1;
+
+  function nextNo(){ currentCalledNo = mod1(currentCalledNo+1); renderActionForm(currentCalledNo); }
+  function prevNo(){ currentCalledNo = mod1(currentCalledNo-1); renderActionForm(currentCalledNo); }
+
+  function aliveNos(includeDead=false){ return state.players.filter(p=> includeDead || p.alive).map(p=>p.no); }
+
+  function optionsFor(nos, placeholder){
+    const opts = [`<option value="">${placeholder}</option>`].concat(nos.map(n=>`<option value="${n}">#${n}</option>`));
+    return opts.join('');
+  }
+
+  function renderActionForm(no){
+    el('callingNo').textContent = no;
+    const p = getP(no);
+    const W = el('actionForm');
+    if(!p){ W.innerHTML = '<div class="callout">No such player number in this lobby size.</div>'; return; }
+    if(!p.alive){ W.innerHTML = '<div class="callout">This player is dead. No action.</div>'; return; }
+
+    const key = `${state.round}:${no}`;
+    if(!state.actionsThisRound.has(key)) state.actionsThisRound.set(key,{no, role:p.role});
+    const act = state.actionsThisRound.get(key);
+
+    const header = `<div class="pill">Role: <strong style="margin-left:6px">${p.role}</strong>${p.role===ROLES.CITIZEN && p.immuneAntibodies? ' · <span title="Antibodies">🧬</span>':''}</div>`;
+
+    let html = header + '<div class="divider"></div>';
+
+    const aliveList = aliveNos().filter(x=>x!==no);
+
+    if(p.role===ROLES.CITIZEN){
+      html += `<label>Citizen Guess (who is a Terrorist?)</label>
+               <select id="citGuess">${optionsFor(aliveList,'Select number')}</select>`;
+    }
+
+    if(p.role===ROLES.TERRORIST){
+      html += `<div class="stack">
+                 <label>Virus Launch (once per match)</label>
+                 <select id="tVirus" ${p.canLaunchVirus?'' : 'disabled'}>${optionsFor(aliveList,'Choose target')}</select>
+                 <label>Shoot (1 bullet total)</label>
+                 <select id="tShoot" ${p.hasBullet?'' : 'disabled'}>${optionsFor(aliveList,'Choose target')}</select>
+                 <label>Use Antidote (1 total)</label>
+                 <select id="tAntidote" ${p.hasAntidote?'' : 'disabled'}>${optionsFor(aliveList,'Choose target')}</select>
+               </div>`;
+    }
+
+    if(p.role===ROLES.OFFICER){
+      html += `<label>Officer Kill (once each round)</label>
+               <select id="oKill">${optionsFor(aliveList,'Choose target')}</select>`;
+    }
+
+    if(p.role===ROLES.RESEARCHER){
+      html += `<label>Research / Interact with… (max 1 per researcher per round)</label>
+               <select id="rInteract">${optionsFor(aliveList,'Choose target')}</select>`;
+    }
+
+    if(p.role===ROLES.JOURNALIST){
+      html += `<label>Investigate a player (1 per round)</label>
+               <select id="jInvestigate">${optionsFor(aliveList,'Choose target')}</select>
+               <div class="small muted">+1 only for Terrorists and the Officer (first time each).</div>`;
+    }
+
+    if(p.role===ROLES.FANATIC){
+      html += `<label>Fanatic guess (who is the Officer?)</label>
+               <select id="fGuess">${optionsFor(aliveList,'Choose number')}</select>
+               <div class="small muted">+1 this round if correct; death timing still applies.</div>`;
+    }
+
+    html += `<div class="flex" style="justify-content:flex-end;margin-top:8px">
+               <button class="primary" id="saveAct">Save Action for #${no}</button>
+             </div>`;
+
+    W.innerHTML = html;
+
+    // rehydrate saved values
+    if(p.role===ROLES.CITIZEN && act.citGuess) el('citGuess').value = act.citGuess;
+    if(p.role===ROLES.TERRORIST){
+      if(act.tVirus) el('tVirus').value = act.tVirus;
+      if(act.tShoot) el('tShoot').value = act.tShoot;
+      if(act.tAntidote) el('tAntidote').value = act.tAntidote;
+    }
+    if(p.role===ROLES.OFFICER && act.oKill) el('oKill').value = act.oKill;
+    if(p.role===ROLES.RESEARCHER && act.rInteract) el('rInteract').value = act.rInteract;
+    if(p.role===ROLES.JOURNALIST && act.jInvestigate) el('jInvestigate').value = act.jInvestigate;
+    if(p.role===ROLES.FANATIC && act.fGuess) el('fGuess').value = act.fGuess;
+
+    el('saveAct').onclick = ()=>{
+      if(p.role===ROLES.CITIZEN) act.citGuess = parseInt(el('citGuess').value||0,10)||null;
+      if(p.role===ROLES.TERRORIST){
+        act.tVirus = parseInt(el('tVirus')?.value||0,10)||null;
+        act.tShoot = parseInt(el('tShoot')?.value||0,10)||null;
+        act.tAntidote = parseInt(el('tAntidote')?.value||0,10)||null;
+      }
+      if(p.role===ROLES.OFFICER) act.oKill = parseInt(el('oKill').value||0,10)||null;
+      if(p.role===ROLES.RESEARCHER) act.rInteract = parseInt(el('rInteract').value||0,10)||null;
+      if(p.role===ROLES.JOURNALIST) act.jInvestigate = parseInt(el('jInvestigate').value||0,10)||null;
+      if(p.role===ROLES.FANATIC) act.fGuess = parseInt(el('fGuess').value||0,10)||null;
+
+      state.actionsThisRound.set(key, act);
+      log(`Saved action for <b>#${no}</b> (${p.role}).`);
+      renderScoreboard();
+    };
+  }
+
+  /***********************
+   * Scoring helpers     *
+   ***********************/
+  function fanaticPointsForRound(r){
+    if(r<=1) return 6; if(r===2) return 5; if(r===3) return 4; if(r===4) return 3; if(r===5) return 2; if(r===6) return 1; return 0;
+  }
+  function researcherSpeedPoints(round){
+    if(state.N>=16){ return round<=3?5 : round===4?4 : round===5?3 : 2; }
+    else { return round<=2?5 : round===3?4 : round===4?3 : 2; }
+  }
+  function officerRequiredKills(){ return state.players.filter(p=>p.role===ROLES.TERRORIST).length; }
+  function officerSpeedPoints(round){ return researcherSpeedPoints(round); }
+
+  /***********************
+   * End-of-round engine *
+   ***********************/
+  function processEndOfRound(){
+    // 1) Apply lethal actions (Officer, Terrorists bullets)
+    const thisRoundKeyPrefix = `${state.round}:`;
+    const acts = Array.from(state.actionsThisRound.entries())
+      .filter(([k,v])=>k.startsWith(thisRoundKeyPrefix))
+      .map(([k,v])=>v);
+
+    const killsNow = [];
+
+    // Officer kills
+    for(const a of acts.filter(a=>a.role===ROLES.OFFICER && a.oKill)){
+      const target = getP(a.oKill);
+      if(target && target.alive){
+        target.alive=false;
+        killsNow.push({by:`Officer #${a.no}`, target:target.no});
+        const wasT = (target.role===ROLES.TERRORIST);
+        state.officerKills.push({by:a.no, round:state.round, target:target.no, wasT});
+        if(!wasT) {
+          const killer = getP(a.no);
+          if(killer) { killer.points -= 1; log(`Officer penalty: <b>#${a.no}</b> killed non-terrorist <b>#${target.no}</b> (−1).`); }
+        }
+      }
+    }
+
+    // Terrorist bullets
+    for(const a of acts.filter(a=>a.role===ROLES.TERRORIST && a.tShoot)){
+      const terr = getP(a.no);
+      if(!terr.hasBullet) continue; // already used
+      const t = getP(a.tShoot);
+      if(t && t.alive){ t.alive=false; killsNow.push({by:`Terrorist #${a.no}`, target:t.no}); terr.hasBullet=false; }
+    }
+
+    // 2) Apply Antidotes (set barrier)
+    for(const a of acts.filter(a=>a.role===ROLES.TERRORIST && a.tAntidote)){
+      const terr = getP(a.no);
+      if(!terr.hasAntidote) continue;
+      const t = getP(a.tAntidote);
+      if(!t || !t.alive) continue;
+      t.antidoteBarrier = true;
+      terr.hasAntidote=false;
+      log(`Antidote used by <b>#${a.no}</b> on <b>#${t.no}</b> (🛡️ barrier set).`);
+    }
+
+    // 3) Terrorist Virus Launches (create sources)
+    for(const a of acts.filter(a=>a.role===ROLES.TERRORIST && a.tVirus)){
+      const terr = getP(a.no);
+      if(!terr.canLaunchVirus) continue;
+      const target = getP(a.tVirus);
+      if(target && target.alive){
+        infectDirect(target.no, state.round);
+        state.virusSources.push({source: target.no, round: state.round, cwBlockedAt: null, ccwBlockedAt: null});
+        terr.canLaunchVirus = false;
+        log(`Virus launched by <b>#${a.no}</b> → infect <b>#${target.no}</b> (patient zero).`);
+      }
+    }
+
+    // 4) Researcher interactions
+    for(const a of acts.filter(a=>a.role===ROLES.RESEARCHER && a.rInteract)){
+      const targetNo = a.rInteract;
+      if(targetNo === state.antibodiesHolder){
+        state.cureHits++;
+        log(`Research success by <b>#${a.no}</b> with antibodies holder <b>#${targetNo}</b>. (+50%)`);
+        if(state.cureHits>=2 && state.researchAwardedRound==null){
+          // award speed points to ALL researchers
+          const pts = researcherSpeedPoints(state.round);
+          state.players.filter(p=>p.role===ROLES.RESEARCHER).forEach(r=> r.points += pts);
+          state.researchAwardedRound = state.round;
+          log(`Researchers completed cure by round ${state.round}. (+${pts} to all Researchers)`);
+        }
+      } else {
+        log(`Research by <b>#${a.no}</b> on <b>#${targetNo}</b>.`)
+      }
+    }
+
+    // 5) Journalist investigation (points only for Terrorists and the Officer, once each)
+    for(const a of acts.filter(a=>a.role===ROLES.JOURNALIST && a.jInvestigate)){
+      const target = getP(a.jInvestigate);
+      if(!target) continue;
+      if(target.role===ROLES.TERRORIST){
+        if(!state.journalistFoundTSet.has(target.no)){
+          state.journalistFoundTSet.add(target.no);
+          const journalist = state.players.find(p=>p.role===ROLES.JOURNALIST);
+          if(journalist) journalist.points += 1;
+        }
+        log(`Journalist investigated <b>#${target.no}</b> → Terrorist. (+1 if first time)`);
+      } else if(target.role===ROLES.OFFICER){
+        if(!state.journalistFoundOfficer){
+          state.journalistFoundOfficer = true;
+          const journalist = state.players.find(p=>p.role===ROLES.JOURNALIST);
+          if(journalist) journalist.points += 1;
+        }
+        log(`Journalist investigated <b>#${target.no}</b> → Officer. (+1 if first time)`);
+      } else {
+        log(`Journalist investigated <b>#${target.no}</b> → ${target.role}. (no points)`);
+      }
+    }
+
+    // 6) Citizens' guesses scoring (+1 if guessed a Terrorist)
+    for(const a of acts.filter(a=>a.role===ROLES.CITIZEN && a.citGuess)){
+      const t = getP(a.citGuess);
+      if(t && t.role===ROLES.TERRORIST){ const c = getP(a.no); c.points += 1; log(`Citizen <b>#${a.no}</b> guessed Terrorist <b>#${t.no}</b> correctly. (+1)`)}
+    }
+
+    // 6b) Fanatic officer-guess bonus (+1 each round if correct)
+    const officerNos = state.players.filter(p=>p.role===ROLES.OFFICER).map(p=>p.no);
+    for(const a of acts.filter(a=>a.role===ROLES.FANATIC && a.fGuess)){
+      if(officerNos.includes(a.fGuess)){
+        const f = getP(a.no); f.points += 1; log(`Fanatic <b>#${a.no}</b> correctly guessed Officer <b>#${a.fGuess}</b>. (+1 this round)`);
+      }
+    }
+
+    // 7) Propagate virus & compute deaths
+    const virusDeaths = [];
+    propagateVirus();
+    for(const p of state.players){
+      if(!p.alive) continue;
+      if(p.infected){
+        const age = state.round - p.infectionRound;
+        if(age>=2 && !p.immuneAntibodies && !p.antidoteBarrier){
+          p.alive=false; virusDeaths.push(p.no);
+        }
+      }
+    }
+
+    // Fanatic scoring on death timing (virus or kills)
+    for(const d of virusDeaths){
+      const fp = getP(d);
+      if(fp.role===ROLES.FANATIC){ const pts = fanaticPointsForRound(state.round); fp.points += pts; log(`Fanatic <b>#${fp.no}</b> died to virus (round ${state.round}). (+${pts})`); }
+    }
+    for(const k of killsNow){
+      const p = getP(k.target);
+      if(p.role===ROLES.FANATIC){ const pts = fanaticPointsForRound(state.round); p.points += pts; log(`Fanatic <b>#${p.no}</b> was killed (round ${state.round}). (+${pts})`); }
+    }
+
+    state.lastVirusDeaths = virusDeaths;
+
+    // Officer speed award: check per officer if they personally reached required kills
+    const req = officerRequiredKills();
+    const byOfficer = new Map();
+    for(const k of state.officerKills.filter(x=>x.wasT)){
+      if(!byOfficer.has(k.by)) byOfficer.set(k.by, []);
+      byOfficer.get(k.by).push(k.round);
+    }
+    for(const [offNo, rounds] of byOfficer.entries()){
+      if(!state.officerAwarded.has(offNo) && rounds.length>=req){
+        const lastKillRound = Math.max(...rounds);
+        const bonus = officerSpeedPoints(lastKillRound);
+        const off = getP(offNo);
+        if(off && bonus>0){ off.points += bonus; state.officerAwarded.add(offNo); log(`Officer bonus: <b>#${offNo}</b> eliminated ${req} Terrorist(s) by round ${lastKillRound}. (+${bonus})`); }
+      }
+    }
+
+    // 8) Check victory conditions
+    const victory = checkVictory();
+
+    // 9) Advance round number
+    state.round++;
+    state.actionsThisRound = new Map();
+
+    // 10) Update UI & show summary
+    renderAll();
+    if(victory){
+      showVictory(victory);
+    } else {
+      updateKPIs();
+      showModal();
+    }
+  }
+
+  function infectDirect(no, round){
+    const p = getP(no);
+    if(!p || !p.alive || p.antidoteBarrier) return;
+    if(!p.infected){ p.infected=true; p.infectionRound=round; }
+  }
+
+  function propagateVirus(){
+    for(const src of state.virusSources){
+      const dist = state.round - src.round;
+      if(dist<1) continue;
+      // CW
+      if(src.cwBlockedAt==null){
+        const tCW = mod1(src.source + dist);
+        const node = getP(tCW);
+        if(node && node.antidoteBarrier){ src.cwBlockedAt = dist; }
+        else infectDirect(tCW, src.round + dist);
+      }
+      // CCW
+      if(src.ccwBlockedAt==null){
+        const tCCW = mod1(src.source - dist);
+        const node2 = getP(tCCW);
+        if(node2 && node2.antidoteBarrier){ src.ccwBlockedAt = dist; }
+        else infectDirect(tCCW, src.round + dist);
+      }
+    }
+  }
+
+  function checkVictory(){
+    // 1 - All terrorists dead -> Citizen victory
+    const terroristsAlive = state.players.filter(p=>p.role===ROLES.TERRORIST && p.alive).length;
+    if(terroristsAlive===0){ return {team:'Citizens', reason:'All terrorists are dead.'}; }
+
+    // 3 - Cure completed -> Citizen victory
+    if(state.cureHits>=2){ return {team:'Citizens', reason:'The cure has been completed.'}; }
+
+    // 2 - All non-terrorists dead except the antibody holder AND at least one terrorist alive
+    const nonTAlive = state.players.filter(p=>p.role!==ROLES.TERRORIST && p.alive);
+    if(nonTAlive.length===1 && nonTAlive[0].no===state.antibodiesHolder && terroristsAlive>0){
+      return {team:'Terrorists', reason:'All non-terrorists are dead except the antibodies citizen.'};
+    }
+
+    return null;
+  }
+
+  function showVictory(v){
+    if(v.team==='Citizens'){
+      // +2 to all non-terrorists except Fanatics
+      for(const p of state.players){ if(p.role!==ROLES.TERRORIST && p.role!==ROLES.FANATIC){ p.points += 2; } }
+      log(`<b>Citizens Win!</b> ${v.reason} (+2 points to non-terrorists except Fanatics)`);
+    } else if(v.team==='Terrorists'){
+      // +4 to terrorists; +1 if all terrorists survive
+      const terrorists = state.players.filter(p=>p.role===ROLES.TERRORIST);
+      const allSurvived = terrorists.every(t=>t.alive);
+      terrorists.forEach(t=> t.points += 4 + (allSurvived?1:0));
+      log(`<b>Terrorists Win!</b> ${v.reason} (+4 to each Terrorist${allSurvived? ' and +1 bonus (all survived)':''})`);
+    }
+
+    renderScoreboard();
+    alert(`${v.team} Victory!
+${v.reason}`);
+  }
+
+  /***********************
+   * Export / Import     *
+   ***********************/
+  function exportState(){
+    const data = JSON.stringify(state, (k,v)=>{
+      if(k==='timer') return {...v, handle:undefined}; // drop handle
+      if(v instanceof Set) return Array.from(v); // Sets to arrays for JSON
+      return v;
+    }, 2);
+    const blob = new Blob([data],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `virus-game-save-round-${state.round}-players-${state.N}.json`; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function importStateFile(){
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.json,application/json';
+    inp.onchange = (e)=>{
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{
+        try{
+          const obj = JSON.parse(r.result);
+          obj.journalistFoundTSet = new Set(obj.journalistFoundTSet||[]);
+          obj.officerAwarded = new Set(obj.officerAwarded||[]);
+          obj.players = obj.players.map(p=>Object.assign(new Player(p.no,p.role),p));
+          Object.assign(state,obj);
+          pauseTimer();
+          renderAll();
+          log('Save loaded.');
+          el('playerCount').value = String(state.N||12);
+        }catch(err){ alert('Invalid save file.'); }
+      };
+      r.readAsText(f);
+    };
+    inp.click();
+  }
+
+  /***********************
+   * Event listeners     *
+   ***********************/
+  el('rerollBtn').onclick = ()=>{ if(confirm('Randomise roles and start a new game?')) newGame(); };
+  el('startBtn').onclick = startTimer;
+  el('pauseBtn').onclick = pauseTimer;
+  el('resetBtn').onclick = resetTimer;
+  el('summaryBtn').onclick = showModal;
+  el('endRoundBtn').onclick = processEndOfRound;
+  el('exportBtn').onclick = exportState;
+  el('importBtn').onclick = importStateFile;
+  el('nextNo').onclick = nextNo;
+  el('prevNo').onclick = prevNo;
+  el('applyBtn').onclick = ()=>{ if(confirm('Apply player count and reset the game?')) newGame(); };
+
+  // boot
+  el('playerCount').value = '12';
+  newGame();
+  renderActionForm(currentCalledNo);
+  updateKPIs();
+  </script>
+</body>
+</html>
