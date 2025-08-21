@@ -123,7 +123,7 @@
       document.getElementById("winnerDisplay").textContent = "";
     }
 
-    function addParticipant() {
+   <!-- function addParticipant() {
       const nameInput = document.getElementById("nameInput");
       const name = nameInput.value.trim();
       if (name && !participants.hasOwnProperty(name)) {
@@ -147,16 +147,17 @@
 
         nameInput.value = "";
       }
-    }
+    } 
 
     function selectWinner(name) {
       participants[name]++;
       document.getElementById("score-" + name).textContent = `Score: ${participants[name]}`;
       document.getElementById("winnerDisplay").textContent = `${name} wins this challenge! 🎉`;
-    }
+    } -->
 
     document.getElementById("selectBtn").addEventListener("click", getRandomScenario);
   </script>
 </body>
 </html>
+
 
