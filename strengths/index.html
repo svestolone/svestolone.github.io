@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Friendly Challenge Picker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      height: 100vh;
+      background-color: #000000;
+      text-align: center;
+      padding: 20px;
+    }
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #scenario {
+      font-size: 1.5rem;
+      margin: 30px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+    }
+    #selectBtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    #selectBtn img {
+      width: 120px;
+    }
+    #participants {
+      width: 250px;
+      text-align: left;
+    }
+    #participants input {
+      width: 90%;
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .participant-button {
+      margin: 5px 0;
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .participant-button:hover {
+      background-color: #45a049;
+    }
+    .score-display {
+      font-size: 0.9rem;
+      color: #ffffff;
+      display: inline-block;
+      width: 100%;
+      text-align: left;
+    }
+    #winnerDisplay {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-content">
+    <h1><font color="ffffff">🎮 Friendly Challenge Scenarios</font></h1>
+    <div id="scenario">Click the button to reveal your challenge!</div>
+    <button id="selectBtn"><img src="select.png" alt="Select" /></button>
+    <div id="winnerDisplay"></div>
+  </div>
+
+  <!-- <div id="participants">
+    <h3><font color="ffffff"> Enter Participant Names:</font></h3>
+    <input type="text" id="nameInput" placeholder="Enter name" />
+    <button onclick="addParticipant()">Add</button>
+    <div id="participantList"></div>
+  </div> -->
+
+  <script>
+    const scenarios = [
+      "You just rage-quit a Roblox game and your friend is watching. How do you bounce back without looking salty?",
+      "Your football team just lost 8–0, and your crush was in the audience. How do you keep your cool and stay positive?",
+      "You were caught watching Taylor Swift edits in class and now the teacher’s giving you the look. How do you handle it?",
+      "You accidentally snored so loud during a class nap that everyone laughed. What do you do next?",
+      "You dropped your phone in the toilet. It's dead. How do you survive the day without losing your mind?",
+      "Someone called your Roblox avatar ‘crusty.’ How do you respond with your strength instead of roasting back?",
+      "Your friend keeps bragging about being better at COD. How do you stay chill and not go full toxic?",
+      "You failed your Science test. Your parents just stared at you in silence. What strength do you use to survive this moment?",
+      "You were dared to sing a Taylor Swift song at school assembly. How do you prepare for the moment?",
+      "You and your best friend want the same jersey number. How do you settle it like a legend, not a crybaby?",
+      "Someone made fun of you for bringing cough drops to school. How do you respond in a way that’s low-key powerful?",
+      "Your Roblox game just got hacked and all your stuff is gone. How do you start over?",
+      "You walked into class late with food stuck in your braces. How do you play it cool?",
+      "You got chosen last for rugby AGAIN. How do you prove your worth without whining?",
+      "Someone said ‘Why you acting so extra today?’ in front of the group. How do you keep your vibe strong?",
+      "You accidentally farted during rugby practice. What would you do at that moment of silence?"
+    ];
+
+    let remaining = [...scenarios];
+    let participants = {};
+
+    function getRandomScenario() {
+      if (remaining.length === 0) {
+        remaining = [...scenarios];
+      }
+      const index = Math.floor(Math.random() * remaining.length);
+      const scenario = remaining.splice(index, 1)[0];
+      document.getElementById("scenario").textContent = scenario;
+      document.getElementById("winnerDisplay").textContent = "";
+    }
+
+    function addParticipant() {
+      const nameInput = document.getElementById("nameInput");
+      const name = nameInput.value.trim();
+      if (name && !participants.hasOwnProperty(name)) {
+        participants[name] = 0;
+
+        const container = document.createElement("div");
+
+        const scoreSpan = document.createElement("div");
+        scoreSpan.className = "score-display";
+        scoreSpan.id = `score-${name}`;
+        scoreSpan.textContent = `Score: 0`;
+
+        const btn = document.createElement("button");
+        btn.textContent = name;
+        btn.className = "participant-button";
+        btn.onclick = () => selectWinner(name);
+
+        container.appendChild(scoreSpan);
+        container.appendChild(btn);
+        document.getElementById("participantList").appendChild(container);
+
+        nameInput.value = "";
+      }
+    }
+
+    function selectWinner(name) {
+      participants[name]++;
+      document.getElementById("score-" + name).textContent = `Score: ${participants[name]}`;
+      document.getElementById("winnerDisplay").textContent = `${name} wins this challenge! 🎉`;
+    }
+
+    document.getElementById("selectBtn").addEventListener("click", getRandomScenario);
+  </script>
+</body>
+</html>
