@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Piano Notes Rain</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+    }
+    canvas {
+      display: block;
+    }
+    #menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(20, 20, 40, 0.9);
+      padding: 40px 60px;
+      border-radius: 12px;
+      text-align: center;
+      z-index: 20;
+      box-shadow: 0 0 30px rgba(100,100,255,0.3);
+    }
+    #menu h1 {
+      margin: 0 0 30px 0;
+      font-size: 2.2em;
+    }
+    #menu label {
+      display: block;
+      margin: 20px 0;
+      font-size: 1.2em;
+    }
+    #menu input, #menu button {
+      padding: 12px 20px;
+      font-size: 1.1em;
+      margin: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+    #menu button {
+      background: #4a6bff;
+      color: white;
+      cursor: pointer;
+      margin-top: 30px;
+    }
+    #menu button:hover {
+      background: #6a8fff;
+    }
+    #info {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(0,0,0,0.6);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>Piano Notes Rain</h1>
+  
+  <label>
+    Speed (px/frame):
+    <input type="range" id="speed" min="0.5" max="10" step="0.2" value="2">
+    <span id="speedValue">2.0</span>
+  </label>
+  
+  <label>
+    Total notes to drop:
+    <input type="number" id="totalNotes" min="5" max="300" value="50" step="5">
+  </label>
+  
+  <button id="startBtn">Start Game</button>
+</div>
+
+<div id="info" style="display:none;">
+  Notes remaining: <span id="remaining">0</span> / <span id="total">0</span>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// ───────────────────────────────────────────────
+// Setup
+// ───────────────────────────────────────────────
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let width = canvas.width = window.innerWidth;
+let height = canvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+});
+
+const notes = ['C2', 'G2', 'F3', 'C4', 'G4', 'F5', 'C6'];
+const noteWidth = 41;
+const noteHeight = 211;
+const keyboardHeight = 271;
+const keyboardY = height - keyboardHeight;
+
+// Preload images
+const images = {};
+notes.forEach(note => {
+  const img = new Image();
+  img.src = note + '.png';
+  images[note] = img;
+});
+
+const keyboardImg = new Image();
+keyboardImg.src = 'keyboard.png';
+
+// Game state
+let fallingNotes = [];
+let speed = 2;
+let totalNotes = 50;
+let notesSpawned = 0;
+let gameRunning = false;
+
+// UI elements
+const menu = document.getElementById('menu');
+const startBtn = document.getElementById('startBtn');
+const speedSlider = document.getElementById('speed');
+const speedValue = document.getElementById('speedValue');
+const totalNotesInput = document.getElementById('totalNotes');
+const infoPanel = document.getElementById('info');
+const remainingEl = document.getElementById('remaining');
+const totalEl = document.getElementById('total');
+
+// Live update speed display
+speedSlider.oninput = () => {
+  speed = parseFloat(speedSlider.value);
+  speedValue.textContent = speed.toFixed(1);
+};
+
+// Start game
+startBtn.onclick = () => {
+  speed = parseFloat(speedSlider.value);
+  totalNotes = parseInt(totalNotesInput.value);
+  
+  if (totalNotes < 1) totalNotes = 1;
+  
+  menu.style.display = 'none';
+  infoPanel.style.display = 'block';
+  
+  resetGame();
+  gameRunning = true;
+  requestAnimationFrame(gameLoop);
+};
+
+function resetGame() {
+  fallingNotes = [];
+  notesSpawned = 0;
+  remainingEl.textContent = totalNotes;
+  totalEl.textContent = totalNotes;
+}
+
+// Get position for next note (left to right, wrap to next row)
+function getNextNoteX() {
+  if (notesSpawned === 0) return 20;
+  
+  const gap = 10;
+  const notesPerRow = Math.floor((width - 40) / (noteWidth + gap));
+  const colIndex = notesSpawned % notesPerRow;
+  const rowIndex = Math.floor(notesSpawned / notesPerRow);
+  
+  const x = 20 + colIndex * (noteWidth + gap);
+  const y = -noteHeight - rowIndex * (noteHeight + 30); // extra spacing between rows
+  
+  return { x, y };
+}
+
+// Spawn next note — now RANDOM note
+function spawnNextNote() {
+  if (notesSpawned >= totalNotes) return false;
+  
+  // Random note selection
+  const randomIndex = Math.floor(Math.random() * notes.length);
+  const note = notes[randomIndex];
+  
+  const pos = getNextNoteX();
+  
+  fallingNotes.push({
+    note: note,
+    x: pos.x,
+    y: pos.y
+  });
+  
+  notesSpawned++;
+  remainingEl.textContent = totalNotes - notesSpawned;
+  
+  return true;
+}
+
+// Main loop
+function gameLoop(timestamp) {
+  if (!gameRunning) return;
+
+  // Clear screen
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, width, height);
+
+  // Spawn notes gradually
+  if (fallingNotes.length < 25 && notesSpawned < totalNotes) {
+    spawnNextNote();
+  }
+
+  // Update & draw notes
+  for (let i = fallingNotes.length - 1; i >= 0; i--) {
+    const n = fallingNotes[i];
+    n.y += speed;
+
+    // Draw note
+    const img = images[n.note];
+    if (img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, n.x, n.y, noteWidth, noteHeight);
+    } else {
+      ctx.fillStyle = '#4444ff';
+      ctx.fillRect(n.x, n.y, noteWidth, noteHeight);
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 26px Arial';
+      ctx.fillText(n.note, n.x + 4, n.y + 65);
+    }
+
+    // Remove when reached bottom
+    if (n.y >= keyboardY - noteHeight) {
+      fallingNotes.splice(i, 1);
+    }
+  }
+
+  // Draw keyboard
+  if (keyboardImg.complete && keyboardImg.naturalWidth > 0) {
+    ctx.drawImage(keyboardImg, 0, keyboardY, width, keyboardHeight);
+  } else {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0, keyboardY, width, keyboardHeight);
+    ctx.fillStyle = '#888';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('[ Keyboard ]', width/2, keyboardY + 100);
+  }
+
+  // Check if game is finished
+  if (notesSpawned >= totalNotes && fallingNotes.length === 0) {
+    gameRunning = false;
+    
+    // Show completion message
+    ctx.fillStyle = 'rgba(0, 180, 0, 0.7)';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 80px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('FINISHED!', width/2, height/2 - 40);
+    ctx.font = '40px Arial';
+    ctx.fillText(`${totalNotes} notes completed`, width/2, height/2 + 40);
+    
+    // Automatically return to menu after 2.5 seconds
+    setTimeout(() => {
+      menu.style.display = 'block';
+      startBtn.textContent = "Start Game";
+      infoPanel.style.display = 'none';
+    }, 2500);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Initial values
+speedValue.textContent = speedSlider.value;
+
+</script>
+</body>
+</html>
