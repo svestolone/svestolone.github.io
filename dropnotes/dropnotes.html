@@ -2,165 +2,152 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Flash Piano Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Music Notes</title>
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       height: 100vh;
       background: #000;
       color: white;
       font-family: Arial, Helvetica, sans-serif;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
-    #menu {
+
+    #setup {
+      text-align: center;
+      font-size: 1.4rem;
+    }
+
+    #setup input {
+      font-size: 1.5rem;
+      width: 80px;
+      text-align: center;
+      margin: 0 10px;
+      padding: 8px;
+      border: 2px solid #444;
+      background: #111;
+      color: white;
+      border-radius: 6px;
+    }
+
+    #setup button {
+      font-size: 1.3rem;
+      padding: 10px 24px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    #setup button:hover {
+      background: #555;
+    }
+
+    #game {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .note-container {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(20, 20, 60, 0.85);
-      padding: 40px 60px;
-      border-radius: 12px;
-      text-align: center;
-      z-index: 20;
-      box-shadow: 0 0 40px rgba(80,80,255,0.4);
+      display: flex;
+      align-items: center;
+      gap: 20px; /* space between notes */
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 95vw;
+      padding: 20px;
     }
-    #menu h1 {
-      margin: 0 0 30px;
-      font-size: 2.5em;
+
+    .note {
+      width: 41px;
+      height: 211px;
+      flex-shrink: 0;
     }
-    #menu label {
+
+    .note img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
       display: block;
-      margin: 25px 0;
-      font-size: 1.4em;
-    }
-    #menu input, #menu button {
-      padding: 14px 28px;
-      font-size: 1.3em;
-      margin: 12px;
-      border-radius: 8px;
-      border: none;
-    }
-    #menu button {
-      background: #4a6bff;
-      color: white;
-      cursor: pointer;
-    }
-    #menu button:hover {
-      background: #6383ff;
-    }
-    #canvas {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
     }
   </style>
 </head>
 <body>
 
-<div id="menu">
-  <h1>Show Piano Notes</h1>
-  
-  <label>
-    How many notes:
-    <input type="number" id="count" min="1" max="400" value="35" step="5">
-  </label>
-  
-  <button id="start">Show</button>
-</div>
+  <div id="setup">
+    <p>How many notes do you want to see?</p>
+    <input type="number" id="numNotes" min="1" value="5" />
+    <button onclick="startGame()">Start</button>
+  </div>
 
-<canvas id="canvas"></canvas>
+  <div id="game">
+    <div class="note-container" id="notesContainer"></div>
+  </div>
 
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+  <script>
+    const notes = ['C2', 'G2', 'F3', 'C4', 'G4', 'F5', 'C6'];
 
-let width = canvas.width = window.innerWidth;
-let height = canvas.height = window.innerHeight;
+    function startGame() {
+      const input = document.getElementById('numNotes');
+      let count = parseInt(input.value);
 
-window.addEventListener('resize', () => {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
-});
+      if (isNaN(count) || count < 1) {
+        alert("Please enter a number 1 or higher.");
+        return;
+      }
 
-const notes = ['C2', 'G2', 'F3', 'C4', 'G4', 'F5', 'C6'];
-const noteWidth = 41;
-const noteHeight = 211;
+      // Hide setup screen
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
 
-// Preload images
-const images = {};
-notes.forEach(note => {
-  const img = new Image();
-  img.src = note + '.png';
-  images[note] = img;
-});
+      const container = document.getElementById('notesContainer');
+      container.innerHTML = ''; // clear previous
 
-const keyboardImg = new Image();
-keyboardImg.src = 'keyboard.png';
+      // Create random notes
+      for (let i = 0; i < count; i++) {
+        const randomNote = notes[Math.floor(Math.random() * notes.length)];
 
-const menu = document.getElementById('menu');
-const startBtn = document.getElementById('start');
-const countInput = document.getElementById('count');
+        const div = document.createElement('div');
+        div.className = 'note';
 
-startBtn.onclick = () => {
-  const count = parseInt(countInput.value) || 30;
-  menu.style.display = 'none';
-  drawNotes(count);
-};
+        const img = document.createElement('img');
+        img.src = `${randomNote}.png`;
+        img.alt = randomNote;
+        img.onerror = () => {
+          img.alt = `Missing: ${randomNote}.png`;
+          img.style.background = '#222';
+        };
 
-function drawNotes(total) {
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, width, height);
-
-  const gap = 14;
-  const maxPerRow = Math.floor((width - 80) / (noteWidth + gap));
-
-  let row = 0;
-  let col = 0;
-
-  // Center the whole block vertically
-  const totalRows = Math.ceil(total / maxPerRow);
-  const blockHeight = totalRows * (noteHeight + gap) - gap;
-  const startY = (height - blockHeight) / 2 - keyboardHeight / 2;
-
-  for (let i = 0; i < total; i++) {
-    const note = notes[Math.floor(Math.random() * notes.length)];
-
-    const x = (width - maxPerRow * (noteWidth + gap) + gap) / 2 + col * (noteWidth + gap);
-    const y = startY + row * (noteHeight + gap);
-
-    const img = images[note];
-    if (img.complete && img.naturalWidth > 0) {
-      ctx.drawImage(img, x, y, noteWidth, noteHeight);
-    } else {
-      // fallback
-      ctx.fillStyle = '#4444ff';
-      ctx.fillRect(x, y, noteWidth, noteHeight);
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 28px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(note, x + noteWidth/2, y + noteHeight/2 + 10);
+        div.appendChild(img);
+        container.appendChild(div);
+      }
     }
 
-    col++;
-    if (col >= maxPerRow) {
-      col = 0;
-      row++;
-    }
-  }
+    // Optional: press Enter to start
+    document.getElementById('numNotes').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        startGame();
+      }
+    });
+  </script>
 
-  // Draw keyboard at bottom
-  if (keyboardImg.complete && keyboardImg.naturalWidth > 0) {
-    ctx.drawImage(keyboardImg, 0, height - keyboardHeight, width, keyboardHeight);
-  } else {
-    ctx.fillStyle = '#222';
-    ctx.fillRect(0, height - keyboardHeight, width, keyboardHeight);
-    ctx.fillStyle = '#888';
-    ctx.font = '32px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('[ Keyboard ]', width/2, height - keyboardHeight/2 + 12);
-  }
-}
-
-</script>
 </body>
 </html>
