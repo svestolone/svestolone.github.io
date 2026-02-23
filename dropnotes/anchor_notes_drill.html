@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anchor Notes Drill</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f0f14;
+    --panel:     #1a1a24;
+    --border:    #2e2e40;
+    --accent:    #c8a96e;
+    --accent2:   #6e9fc8;
+    --text:      #e8e4d8;
+    --muted:     #7a7a8e;
+    --staff-ink: #e8e4d8;
+    --danger:    #c86e6e;
+    --success:   #6ec888;
+
+    --cloud-c:  #b07fe8;
+    --flag-f:   #6ea8e8;
+    --treble-g: #6ed4a0;
+    --middle-c: #e8b46e;
+    --bass-f:   #e87878;
+    --ground-g: #a07ee8;
+    --canyon-c: #6ec8c8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 48px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 24px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── Controls panel ── */
+  .controls {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 780px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+  .ctrl-group label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .ctrl-group select,
+  .ctrl-group input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .ctrl-group select:focus,
+  .ctrl-group input[type=number]:focus { border-color: var(--accent); }
+
+  /* toggle row */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .toggle {
+    position: relative;
+    width: 42px; height: 22px;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer;
+    top:0; left:0; right:0; bottom:0;
+    background: var(--border);
+    border-radius: 22px;
+    transition: 0.25s;
+  }
+  .slider::before {
+    content:''; position:absolute;
+    height:16px; width:16px;
+    left:3px; bottom:3px;
+    background: var(--muted);
+    border-radius:50%;
+    transition:0.25s;
+  }
+  .toggle input:checked + .slider { background: var(--accent2); }
+  .toggle input:checked + .slider::before { transform: translateX(20px); background:#fff; }
+  .toggle-label { font-size: 0.82rem; color: var(--text); }
+
+  /* step/skip selector — only shown when accompany is ON */
+  .accompany-options {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .accompany-options.visible { display: flex; }
+  .radio-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 7px 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .radio-btn.active {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(110,159,200,0.08);
+  }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; }
+  button {
+    font-family: 'DM Mono', monospace;
+    border: none; cursor: pointer;
+    border-radius: 10px;
+    padding: 11px 28px;
+    font-size: 0.88rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all 0.18s;
+  }
+  .btn-start {
+    background: var(--accent);
+    color: #0f0f14;
+    font-weight: 500;
+    box-shadow: 0 4px 18px rgba(200,169,110,0.3);
+  }
+  .btn-start:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,169,110,0.45); }
+  .btn-next {
+    background: var(--panel);
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+  .btn-next:hover { background: rgba(110,159,200,0.1); }
+  .btn-reveal {
+    background: var(--panel);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+  .btn-reveal:hover { background: rgba(110,200,136,0.08); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+
+  /* ── Score area ── */
+  .score-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px 16px;
+    width: 100%;
+    max-width: 780px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+  #scoreCanvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 780px;
+    margin-bottom: 24px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Note name reveal strip ── */
+  #noteStrip {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 36px;
+    max-width: 780px;
+  }
+  .note-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s, transform 0.35s;
+    border: 1px solid;
+  }
+  .note-pill.show { opacity: 1; transform: translateY(0); }
+
+  /* hint */
+  .hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<h1>Anchor Notes Drill</h1>
+<p class="subtitle">Week 5 · Grand Staff Sight-Reading</p>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:var(--cloud-c)"></span>Cloud C (C6)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--flag-f)"></span>Flag F (F5)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--treble-g)"></span>Treble G (G4)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--middle-c)"></span>Middle C (C4)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--bass-f)"></span>Bass F (F3)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--ground-g)"></span>Ground G (G2)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--canyon-c)"></span>Canyon C (C2)</div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Notes per measure</label>
+    <input type="number" id="noteCount" min="1" max="8" value="4">
+  </div>
+  <div class="ctrl-group">
+    <label>Clef</label>
+    <select id="clefSelect">
+      <option value="grand">Grand Staff (both)</option>
+      <option value="treble">Treble only</option>
+      <option value="bass">Bass only</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Show note names</label>
+    <select id="revealMode">
+      <option value="delay">After 2 s delay</option>
+      <option value="immediate">Immediately</option>
+      <option value="manual">On demand (button)</option>
+      <option value="none">Never</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Accompaniment notes</label>
+    <div class="toggle-row">
+      <label class="toggle">
+        <input type="checkbox" id="accompanyToggle">
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">Add 2 follow-up notes</span>
+    </div>
+    <div class="accompany-options" id="accompanyOpts">
+      <div style="font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">Pattern type</div>
+      <div class="radio-row">
+        <div class="radio-btn active" data-val="step">Step (2nd)</div>
+        <div class="radio-btn" data-val="skip">Skip (3rd)</div>
+        <div class="radio-btn" data-val="mixed">Mixed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Buttons -->
+<div class="btn-row">
+  <button class="btn-start" id="btnStart">▶ Start</button>
+  <button class="btn-next" id="btnNext" disabled>Next →</button>
+  <button class="btn-reveal" id="btnReveal" disabled>Reveal Names</button>
+</div>
+
+<!-- Score -->
+<div class="score-wrap">
+  <canvas id="scoreCanvas" width="720" height="220"></canvas>
+</div>
+
+<!-- Note name strip -->
+<div id="noteStrip"></div>
+<p class="hint" id="hintText">Set your options above, then press Start.</p>
+
+<script>
+// ─── Music theory data ────────────────────────────────────────────────────────
+
+// All pitches we care about, ordered by pitch (MIDI-like index)
+// Format: { name, octave, stepIndex (C=0..B=6), midi }
+const PITCH_NAMES = ['C','D','E','F','G','A','B'];
+
+function makePitch(name, octave) {
+  return { name, octave, label: name + octave, stepIndex: PITCH_NAMES.indexOf(name) };
+}
+
+// Full pitch list from C2 to C6 (chromatic steps we care about — diatonic C major)
+const ALL_PITCHES = [];
+for (let oct = 2; oct <= 6; oct++) {
+  for (const n of PITCH_NAMES) {
+    if (oct === 6 && n !== 'C') continue;
+    ALL_PITCHES.push(makePitch(n, oct));
+  }
+}
+// Index by label
+const PITCH_MAP = {};
+ALL_PITCHES.forEach((p, i) => { p.idx = i; PITCH_MAP[p.label] = p; });
+
+// 7 anchor notes
+const ANCHORS = [
+  { label: 'C2', name: 'Canyon C',  color: '#6ec8c8' },
+  { label: 'G2', name: 'Ground G',  color: '#a07ee8' },
+  { label: 'F3', name: 'Bass F',    color: '#e87878' },
+  { label: 'C4', name: 'Middle C',  color: '#e8b46e' },
+  { label: 'G4', name: 'Treble G',  color: '#6ed4a0' },
+  { label: 'F5', name: 'Flag F',    color: '#6ea8e8' },
+  { label: 'C6', name: 'Cloud C',   color: '#b07fe8' },
+];
+
+function getAnchorInfo(label) {
+  return ANCHORS.find(a => a.label === label);
+}
+
+function adjacentPitch(pitch, delta) {
+  const i = pitch.idx + delta;
+  if (i < 0 || i >= ALL_PITCHES.length) return null;
+  return ALL_PITCHES[i];
+}
+
+// ─── Staff drawing engine ─────────────────────────────────────────────────────
+
+const COLORS = {
+  bg:        '#1a1a24',
+  staffLine: '#e8e4d8',
+  barLine:   '#e8e4d8',
+  noteFill:  '#e8e4d8',
+  ledger:    '#e8e4d8',
+  dim:       '#4a4a5e',
+};
+
+const GAP   = 10;   // px between staff lines
+const STEP  = GAP / 2;   // one diatonic step
+
+// Staff layout (y = top of treble top line, canvas y increases downward)
+// Grand staff: treble top line → treble bottom line (4 gaps) → gap of ~3 gaps → bass top line → bass bottom
+const TREBLE_TOP_OFFSET  = 20;    // from canvas top
+const TREBLE_LINES       = 5;
+const STAFF_GAP          = 28;    // gap between treble bottom and bass top
+const BASS_LINES         = 5;
+
+function staffLayout(canvasH, clef) {
+  // Returns positions of key y-coordinates
+  if (clef === 'treble') {
+    const tTop = TREBLE_TOP_OFFSET;
+    const tBot = tTop + (TREBLE_LINES - 1) * GAP;
+    return { trebleTop: tTop, trebleBot: tBot, bassTop: null, bassBot: null, totalH: tBot + 30 };
+  }
+  if (clef === 'bass') {
+    const bTop = TREBLE_TOP_OFFSET;
+    const bBot = bTop + (BASS_LINES - 1) * GAP;
+    return { trebleTop: null, trebleBot: null, bassTop: bTop, bassBot: bBot, totalH: bBot + 30 };
+  }
+  // grand
+  const tTop = TREBLE_TOP_OFFSET;
+  const tBot = tTop + (TREBLE_LINES - 1) * GAP;
+  const bTop = tBot + STAFF_GAP;
+  const bBot = bTop + (BASS_LINES - 1) * GAP;
+  return { trebleTop: tTop, trebleBot: tBot, bassTop: bTop, bassBot: bBot, totalH: bBot + 30 };
+}
+
+// Pitch → canvas Y for a given layout
+// Reference: E4 is treble bottom line, C4 (Middle C) is one step below treble bottom
+// Bass: G2 is bass bottom line
+function pitchToY(pitch, layout, clef) {
+  // For treble clef: treble bottom line = E4
+  // Each step up = STEP pixels up (i.e. subtract STEP)
+  // E4 index in ALL_PITCHES
+  const E4 = PITCH_MAP['E4'];
+  const G2 = PITCH_MAP['G2'];
+
+  if (clef === 'treble' || clef === 'grand') {
+    if (layout.trebleTop !== null) {
+      const deltaFromE4 = pitch.idx - E4.idx;  // positive = higher
+      return layout.trebleBot - deltaFromE4 * STEP;
+    }
+  }
+  if (clef === 'bass' || clef === 'grand') {
+    if (layout.bassTop !== null) {
+      const deltaFromG2 = pitch.idx - G2.idx;
+      return layout.bassBot - deltaFromG2 * STEP;
+    }
+  }
+  return null;
+}
+
+// Decide which staff a pitch belongs to (for grand staff)
+function pitchStaff(pitch) {
+  // Middle C (C4) and above → treble; below C4 → bass
+  const C4 = PITCH_MAP['C4'];
+  return pitch.idx >= C4.idx ? 'treble' : 'bass';
+}
+
+function drawStaffLines(ctx, layout, clef, x1, x2) {
+  ctx.save();
+  ctx.strokeStyle = COLORS.staffLine;
+  ctx.lineWidth = 0.9;
+  // Treble
+  if (layout.trebleTop !== null) {
+    for (let i = 0; i < TREBLE_LINES; i++) {
+      const y = layout.trebleTop + i * GAP;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+    }
+  }
+  // Bass
+  if (layout.bassTop !== null) {
+    for (let i = 0; i < BASS_LINES; i++) {
+      const y = layout.bassTop + i * GAP;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawBarLines(ctx, layout, xs) {
+  ctx.save();
+  ctx.strokeStyle = COLORS.barLine;
+  ctx.lineWidth = 1;
+  const top = layout.trebleTop ?? layout.bassTop;
+  const bot = layout.bassBot ?? layout.trebleBot;
+  for (const x of xs) {
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bot); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Unicode music glyphs
+function drawClefSymbols(ctx, layout, clef, x) {
+  ctx.save();
+  ctx.fillStyle = COLORS.staffLine;
+  if (layout.trebleTop !== null) {
+    ctx.font = `${GAP * 6}px serif`;
+    ctx.fillText('𝄞', x - 4, layout.trebleBot + GAP * 1.5);
+  }
+  if (layout.bassTop !== null) {
+    ctx.font = `${GAP * 3.5}px serif`;
+    ctx.fillText('𝄢', x, layout.bassBot - GAP * 0.8);
+  }
+  ctx.restore();
+}
+
+function drawTimeSig(ctx, layout, x) {
+  ctx.save();
+  ctx.fillStyle = COLORS.staffLine;
+  ctx.font = `bold ${GAP * 1.8}px 'DM Mono', monospace`;
+  ctx.textAlign = 'center';
+  const drawSig = (y) => {
+    ctx.fillText('4', x, y + GAP * 0.55);
+    ctx.fillText('4', x, y + GAP * 1.55);
+  };
+  if (layout.trebleTop !== null) drawSig(layout.trebleTop);
+  if (layout.bassTop   !== null) drawSig(layout.bassTop);
+  ctx.restore();
+}
+
+function drawBracket(ctx, layout) {
+  if (!layout.trebleTop || !layout.bassBot) return;
+  ctx.save();
+  ctx.strokeStyle = COLORS.staffLine;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(12, layout.trebleTop - 2);
+  ctx.lineTo(12, layout.bassBot + 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Draw a note head + stem + ledger lines. color = CSS string.
+function drawNote(ctx, nx, ny, color, layout, staffForNote, showLedger) {
+  const rx = STEP * 1.0;
+  const ry = STEP * 0.72;
+
+  // Ledger lines
+  if (showLedger) {
+    ctx.save();
+    ctx.strokeStyle = COLORS.ledger;
+    ctx.lineWidth = 0.9;
+    const lw = rx * 2.8;
+    const staffTop = staffForNote === 'treble' ? layout.trebleTop : layout.bassTop;
+    const staffBot = staffForNote === 'treble' ? layout.trebleBot : layout.bassBot;
+
+    if (staffTop !== null && staffBot !== null) {
+      // Below staff
+      let ly = staffBot + GAP;
+      while (ly <= ny + ry - 1) {
+        ctx.beginPath(); ctx.moveTo(nx - lw, ly); ctx.lineTo(nx + lw, ly); ctx.stroke();
+        ly += GAP;
+      }
+      // Above staff
+      ly = staffTop - GAP;
+      while (ly >= ny - ry + 1) {
+        ctx.beginPath(); ctx.moveTo(nx - lw, ly); ctx.lineTo(nx + lw, ly); ctx.stroke();
+        ly -= GAP;
+      }
+    }
+
+    // Middle C special ledger (between treble and bass)
+    if (layout.trebleBot !== null && layout.bassTop !== null) {
+      const midCY = layout.trebleBot + STAFF_GAP / 2;
+      if (Math.abs(ny - midCY) < STEP * 0.6) {
+        ctx.beginPath(); ctx.moveTo(nx - lw, ny); ctx.lineTo(nx + lw, ny); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Note head
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, rx, ry, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Stem
+  const staffMidY = staffForNote === 'treble'
+    ? (layout.trebleTop + layout.trebleBot) / 2
+    : (layout.bassTop + layout.bassBot) / 2;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.3;
+  if (ny > staffMidY) {
+    // Stem up
+    ctx.beginPath(); ctx.moveTo(nx + rx, ny); ctx.lineTo(nx + rx, ny - GAP * 3); ctx.stroke();
+  } else {
+    // Stem down
+    ctx.beginPath(); ctx.moveTo(nx - rx, ny); ctx.lineTo(nx - rx, ny + GAP * 3); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ─── App state ───────────────────────────────────────────────────────────────
+let currentNotes   = [];   // array of pitch objects for each slot
+let revealTimer    = null;
+let accompanyMode  = 'step';
+let isRunning      = false;
+
+const canvas    = document.getElementById('scoreCanvas');
+const ctx       = canvas.getContext('2d');
+const btnStart  = document.getElementById('btnStart');
+const btnNext   = document.getElementById('btnNext');
+const btnReveal = document.getElementById('btnReveal');
+const noteStrip = document.getElementById('noteStrip');
+const hintText  = document.getElementById('hintText');
+
+// ─── Controls wiring ─────────────────────────────────────────────────────────
+document.getElementById('accompanyToggle').addEventListener('change', function() {
+  document.getElementById('accompanyOpts').classList.toggle('visible', this.checked);
+});
+
+document.querySelectorAll('.radio-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    accompanyMode = btn.dataset.val;
+  });
+});
+
+// ─── Random note generation ───────────────────────────────────────────────────
+function randomAnchor() {
+  const clef = document.getElementById('clefSelect').value;
+  let pool = ANCHORS;
+  if (clef === 'treble') pool = ANCHORS.filter(a => PITCH_MAP[a.label].idx >= PITCH_MAP['C4'].idx);
+  if (clef === 'bass')   pool = ANCHORS.filter(a => PITCH_MAP[a.label].idx <  PITCH_MAP['C4'].idx);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function buildNoteGroup(anchorLabel, pattern) {
+  const anchor = PITCH_MAP[anchorLabel];
+  const notes = [{ pitch: anchor, isAnchor: true, anchorLabel }];
+  if (document.getElementById('accompanyToggle').checked) {
+    let delta1, delta2;
+    if (pattern === 'step')  { delta1 = 1; delta2 = 1; }
+    else if (pattern === 'skip') { delta1 = 2; delta2 = 2; }
+    else { // mixed
+      const opts = [1, 2, -1, -2];
+      delta1 = opts[Math.floor(Math.random() * opts.length)];
+      delta2 = opts[Math.floor(Math.random() * opts.length)];
+    }
+    const p1 = adjacentPitch(anchor, delta1);
+    const p2 = p1 ? adjacentPitch(p1, delta2) : null;
+    if (p1) notes.push({ pitch: p1, isAnchor: false });
+    if (p2) notes.push({ pitch: p2, isAnchor: false });
+  }
+  return notes;
+}
+
+function generateNotes() {
+  const count    = Math.max(1, Math.min(8, parseInt(document.getElementById('noteCount').value) || 4));
+  const pattern  = accompanyMode;
+  currentNotes = [];
+  for (let i = 0; i < count; i++) {
+    const anchor = randomAnchor();
+    const group  = buildNoteGroup(anchor.label, pattern);
+    group.forEach(n => currentNotes.push(n));
+  }
+}
+
+// ─── Canvas rendering ─────────────────────────────────────────────────────────
+function render() {
+  const clef   = document.getElementById('clefSelect').value;
+  const layout = staffLayout(canvas.height, clef);
+
+  // Resize canvas height to fit content
+  const neededH = layout.totalH + 20;
+  canvas.height = neededH;
+
+  // Clear
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (!isRunning) return;
+
+  const totalNotes = currentNotes.length;
+  const clefOffset = 50;
+  const timeSigOff = 28;
+  const marginL    = clefOffset + timeSigOff + 12;
+  const marginR    = 20;
+  const usableW    = canvas.width - marginL - marginR;
+  const noteSpacing = usableW / (totalNotes + 0.5);
+
+  // Draw staff
+  drawStaffLines(ctx, layout, clef, 14, canvas.width - marginR);
+  drawBracket(ctx, layout);
+  drawBarLines(ctx, layout, [14, canvas.width - marginR]);
+  drawClefSymbols(ctx, layout, clef, 16);
+  drawTimeSig(ctx, layout, marginL - 16);
+
+  // Draw notes
+  currentNotes.forEach((noteObj, i) => {
+    const { pitch, isAnchor, anchorLabel } = noteObj;
+    const nx = marginL + (i + 0.5) * noteSpacing;
+
+    let staffForNote;
+    if (clef === 'grand') {
+      staffForNote = pitchStaff(pitch);
+      // If the chosen staff doesn't exist in layout, fallback
+      if (staffForNote === 'treble' && layout.trebleTop === null) staffForNote = 'bass';
+      if (staffForNote === 'bass'   && layout.bassTop  === null) staffForNote = 'treble';
+    } else {
+      staffForNote = clef;
+    }
+
+    const ny = pitchToY(pitch, layout, clef);
+    if (ny === null) return;
+
+    const color = isAnchor
+      ? getAnchorInfo(anchorLabel)?.color ?? COLORS.noteFill
+      : COLORS.dim;
+
+    drawNote(ctx, nx, ny, color, layout, staffForNote, true);
+  });
+}
+
+// ─── Note name strip ──────────────────────────────────────────────────────────
+function clearStrip() {
+  noteStrip.innerHTML = '';
+}
+
+function showStrip() {
+  clearStrip();
+  currentNotes.forEach((noteObj) => {
+    const pill = document.createElement('div');
+    pill.className = 'note-pill';
+    const info = noteObj.isAnchor ? getAnchorInfo(noteObj.anchorLabel) : null;
+    const color = info?.color ?? '#7a7a8e';
+    pill.style.borderColor = color;
+    pill.style.color = color;
+    pill.style.background = `${color}18`;
+    const extra = info ? ` · ${info.name}` : '';
+    pill.textContent = noteObj.pitch.label + extra;
+    noteStrip.appendChild(pill);
+    // Animate in
+    requestAnimationFrame(() => requestAnimationFrame(() => pill.classList.add('show')));
+  });
+}
+
+function scheduleReveal() {
+  clearStrip();
+  if (revealTimer) clearTimeout(revealTimer);
+  const mode = document.getElementById('revealMode').value;
+  if (mode === 'immediate') {
+    showStrip();
+  } else if (mode === 'delay') {
+    revealTimer = setTimeout(showStrip, 2000);
+  } else if (mode === 'manual') {
+    btnReveal.disabled = false;
+  }
+  // 'none' → nothing
+}
+
+// ─── Button handlers ──────────────────────────────────────────────────────────
+btnStart.addEventListener('click', () => {
+  isRunning = true;
+  btnNext.disabled = false;
+  btnReveal.disabled = true;
+  generateNotes();
+  clearStrip();
+  if (revealTimer) clearTimeout(revealTimer);
+  render();
+  scheduleReveal();
+  hintText.textContent = 'Play the highlighted anchor notes. Use coloured notes as landmarks.';
+  btnStart.textContent = '↺ Restart';
+});
+
+btnNext.addEventListener('click', () => {
+  if (revealTimer) clearTimeout(revealTimer);
+  btnReveal.disabled = true;
+  generateNotes();
+  clearStrip();
+  render();
+  scheduleReveal();
+});
+
+btnReveal.addEventListener('click', () => {
+  showStrip();
+  btnReveal.disabled = true;
+});
+
+// Initial empty canvas
+render();
+</script>
+</body>
+</html>
