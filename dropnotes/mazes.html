@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Mazes</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 720px;
+      background: #222;
+      border: 16px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+    }
+
+    .header {
+      text-align: center;
+      font-size: 26px;
+      color: #ff0;
+      margin-bottom: 10px;
+    }
+
+    .timer {
+      font-size: 34px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 10px;
+      border: 4px solid #f00;
+      margin-bottom: 20px;
+    }
+
+    .maze-container {
+      background: #0a0a0a;
+      padding: 15px;
+      border: 8px solid #555;
+      margin: 15px auto;
+      width: fit-content;
+    }
+
+    .maze {
+      display: grid;
+      grid-template-columns: repeat(11, 42px);
+      gap: 3px;
+      background: #1a1a1a;
+      padding: 4px;
+    }
+
+    .cell {
+      width: 42px;
+      height: 42px;
+      background: #111;
+      position: relative;
+      border: 1px solid #222;
+    }
+
+    .wall {
+      background: #555 !important;
+    }
+
+    .player {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      background: #00ffff;
+      border-radius: 50%;
+      border: 4px solid #bbffff;
+      box-shadow: 0 0 20px #00ffff;
+    }
+
+    .goal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 0; height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 28px solid #ff0000;
+      filter: drop-shadow(0 0 10px #ff0000);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 80px 80px 80px;
+      gap: 12px;
+      justify-content: center;
+      margin: 25px 0;
+    }
+
+    button {
+      padding: 16px;
+      font-size: 28px;
+      background: #333;
+      color: #fff;
+      border: 3px solid #666;
+      cursor: pointer;
+    }
+
+    button:hover { background: #555; }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">MAZES</div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="maze-container">
+      <div class="maze" id="maze"></div>
+    </div>
+
+    <div class="controls">
+      <div></div>
+      <button onclick="move(0,-1)">▲</button>
+      <div></div>
+      <button onclick="move(-1,0)">◀</button>
+      <button onclick="move(1,0)">▶</button>
+      <button onclick="move(0,1)">▼</button>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div class="explosion" id="explosion">💥 BOOM! 💥</div>
+  </div>
+
+  <script>
+    let playerPos = {x: 0, y: 0};
+    let goalPos = {x: 0, y: 0};
+    let walls = [];
+    let size = 11;
+
+    const mazeLibrary = [
+      // Maze 1
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:1,y:1}, goal: {x:9,y:9} },
+      // Maze 2
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:2,y:2}, goal: {x:8,y:7} },
+      // Maze 3
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:0,y:5}, goal: {x:10,y:5} },
+      // Maze 4
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:3,y:1}, goal: {x:7,y:9} },
+      // Maze 5
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:1,y:8}, goal: {x:9,y:2} },
+      // Maze 6
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:4,y:4}, goal: {x:6,y:8} },
+      // Maze 7
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:2,y:3}, goal: {x:8,y:6} },
+      // Maze 8
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:0,y:2}, goal: {x:10,y:8} },
+      // Maze 9
+      { walls: Array(11).fill().map(() => Array(11).fill(0)), start: {x:5,y:1}, goal: {x:5,y:9} }
+    ];
+
+    // Simple wall generation for each maze (you can expand later)
+    function initWalls() {
+      mazeLibrary.forEach(m => {
+        // Create some walls
+        for (let i = 0; i < 11; i++) {
+          m.walls[0][i] = 1;           // top border
+          m.walls[10][i] = 1;          // bottom border
+          m.walls[i][0] = 1;           // left border
+          m.walls[i][10] = 1;          // right border
+        }
+        // Add internal walls (example pattern)
+        m.walls[3][3] = 1; m.walls[3][4] = 1; m.walls[3][5] = 1;
+        m.walls[5][6] = 1; m.walls[6][6] = 1; m.walls[7][6] = 1;
+        m.walls[4][8] = 1; m.walls[5][8] = 1;
+      });
+    }
+
+    function generateMaze() {
+      const m = mazeLibrary[Math.floor(Math.random() * mazeLibrary.length)];
+      walls = m.walls;
+      playerPos = {...m.start};
+      goalPos = {...m.goal};
+      renderMaze();
+    }
+
+    function renderMaze() {
+      const mazeEl = document.getElementById('maze');
+      mazeEl.style.gridTemplateColumns = `repeat(11, 42px)`;
+      mazeEl.innerHTML = '';
+
+      for (let y = 0; y < 11; y++) {
+        for (let x = 0; x < 11; x++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          if (walls[y][x] === 1) cell.classList.add('wall');
+
+          if (x === playerPos.x && y === playerPos.y) {
+            const p = document.createElement('div');
+            p.className = 'player';
+            cell.appendChild(p);
+          }
+          if (x === goalPos.x && y === goalPos.y) {
+            const g = document.createElement('div');
+            g.className = 'goal';
+            cell.appendChild(g);
+          }
+
+          mazeEl.appendChild(cell);
+        }
+      }
+    }
+
+    function move(dx, dy) {
+      const nx = playerPos.x + dx;
+      const ny = playerPos.y + dy;
+
+      if (nx < 0 || nx > 10 || ny < 0 || ny > 10) return;
+      if (walls[ny][nx] === 1) return;
+
+      playerPos.x = nx;
+      playerPos.y = ny;
+      renderMaze();
+
+      if (playerPos.x === goalPos.x && playerPos.y === goalPos.y) {
+        document.getElementById('status').innerHTML = "✅ <b>MAZE SOLVED!</b>";
+        setTimeout(() => {
+          alert("✅ Mazes Module Solved!");
+          resetModule();
+        }, 800);
+      }
+    }
+
+    function startTimer() {
+      let timeLeft = 300;
+      const timerEl = document.getElementById('timer');
+      setInterval(() => {
+        timeLeft--;
+        const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+        const s = (timeLeft%60).toString().padStart(2,'0');
+        timerEl.textContent = `${m}:${s}`;
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) document.getElementById('explosion').style.display = 'flex';
+      }, 1000);
+    }
+
+    function resetModule() {
+      document.getElementById('explosion').style.display = 'none';
+      document.getElementById('status').textContent = '';
+      generateMaze();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowUp') move(0,-1);
+      if (e.key === 'ArrowDown') move(0,1);
+      if (e.key === 'ArrowLeft') move(-1,0);
+      if (e.key === 'ArrowRight') move(1,0);
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    initWalls();
+    generateMaze();
+    startTimer();
+  </script>
+</body>
+</html>

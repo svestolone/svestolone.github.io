@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Memory</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 520px;
+      background: #222;
+      border: 14px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ff0;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 8px;
+      border: 3px solid #f00;
+      margin-bottom: 15px;
+    }
+
+    .stage-info {
+      text-align: center;
+      font-size: 22px;
+      margin: 10px 0;
+    }
+
+    .display {
+      background: #000;
+      color: #0f0;
+      font-size: 48px;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
+      border: 6px solid #555;
+      margin: 15px auto;
+      width: 100px;
+      height: 80px;
+      line-height: 80px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 25px 0;
+    }
+
+    .btn {
+      width: 80px;
+      height: 80px;
+      font-size: 28px;
+      font-weight: bold;
+      background: #333;
+      color: #fff;
+      border: 5px solid #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.9);
+      background: #0a0;
+    }
+
+    .progress {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .step {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #555;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .step.done {
+      background: #0f0;
+      color: black;
+      border-color: #0f0;
+    }
+
+    .explosion {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 0, 0, 0.92);
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: bold;
+      z-index: 10;
+      border-radius: 15px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 18px;
+      min-height: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">MEMORY</div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="stage-info">Stage <span id="stageNum">1</span></div>
+    <div class="display" id="display">1</div>
+
+    <div class="buttons" id="buttons"></div>
+
+    <div class="progress" id="progress"></div>
+
+    <div class="status" id="status"></div>
+    <div class="explosion" id="explosion">💥 BOOM! 💥</div>
+  </div>
+
+  <script>
+    const displayEl = document.getElementById('display');
+    const stageNumEl = document.getElementById('stageNum');
+    const buttonsEl = document.getElementById('buttons');
+    const progressEl = document.getElementById('progress');
+    const statusEl = document.getElementById('status');
+    const timerEl = document.getElementById('timer');
+    const explosionEl = document.getElementById('explosion');
+
+    let timeLeft = 300;
+    let timerInterval = null;
+    let currentStage = 1;
+    let pressHistory = []; // Store position and label for each stage (1-based)
+    let currentDisplayNum = 1;
+
+    function randomSetup() {
+      currentStage = 1;
+      pressHistory = [];
+      updateProgress();
+      nextStage();
+    }
+
+    function updateProgress() {
+      progressEl.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const step = document.createElement('div');
+        step.className = 'step';
+        step.textContent = i;
+        if (i < currentStage) step.classList.add('done');
+        progressEl.appendChild(step);
+      }
+    }
+
+    function nextStage() {
+      currentDisplayNum = Math.floor(Math.random() * 4) + 1;
+      displayEl.textContent = currentDisplayNum;
+      stageNumEl.textContent = currentStage;
+
+      renderButtons();
+    }
+
+    function renderButtons() {
+      buttonsEl.innerHTML = '';
+      const labels = [1, 2, 3, 4].sort(() => Math.random() - 0.5); // Shuffle labels
+
+      labels.forEach((label, index) => {
+        const btn = document.createElement('div');
+        btn.className = 'btn';
+        btn.textContent = label;
+        btn.dataset.position = index + 1; // 1 to 4
+        btn.dataset.label = label;
+
+        btn.addEventListener('click', () => handlePress(index + 1, label));
+        buttonsEl.appendChild(btn);
+      });
+    }
+
+    function handlePress(position, label) {
+      let correct = false;
+
+      switch(currentStage) {
+        case 1:
+          if (currentDisplayNum === 1 && position === 2) correct = true;
+          if (currentDisplayNum === 2 && position === 2) correct = true;
+          if (currentDisplayNum === 3 && position === 3) correct = true;
+          if (currentDisplayNum === 4 && position === 4) correct = true;
+          break;
+
+        case 2:
+          if (currentDisplayNum === 1 && label === 4) correct = true;
+          if (currentDisplayNum === 2 && position === pressHistory[0].position) correct = true;
+          if (currentDisplayNum === 3 && position === 1) correct = true;
+          if (currentDisplayNum === 4 && position === pressHistory[0].position) correct = true;
+          break;
+
+        case 3:
+          if (currentDisplayNum === 1 && label === pressHistory[1].label) correct = true;
+          if (currentDisplayNum === 2 && label === pressHistory[0].label) correct = true;
+          if (currentDisplayNum === 3 && position === 3) correct = true;
+          if (currentDisplayNum === 4 && label === 4) correct = true;
+          break;
+
+        case 4:
+          if (currentDisplayNum === 1 && position === pressHistory[0].position) correct = true;
+          if (currentDisplayNum === 2 && position === 1) correct = true;
+          if (currentDisplayNum === 3 && position === pressHistory[1].position) correct = true;
+          if (currentDisplayNum === 4 && position === pressHistory[1].position) correct = true;
+          break;
+
+        case 5:
+          if (currentDisplayNum === 1 && label === pressHistory[0].label) correct = true;
+          if (currentDisplayNum === 2 && label === pressHistory[1].label) correct = true;
+          if (currentDisplayNum === 3 && label === pressHistory[3].label) correct = true;
+          if (currentDisplayNum === 4 && label === pressHistory[2].label) correct = true;
+          break;
+      }
+
+      if (correct) {
+        pressHistory[currentStage-1] = { position, label };
+        
+        if (currentStage === 5) {
+          statusEl.textContent = "✅ MEMORY SOLVED!";
+          setTimeout(() => {
+            alert("✅ Memory module fully solved!");
+            resetModule();
+          }, 600);
+        } else {
+          currentStage++;
+          updateProgress();
+          setTimeout(nextStage, 400);
+        }
+      } else {
+        statusEl.textContent = "✘ Wrong! Resetting to Stage 1...";
+        setTimeout(() => {
+          currentStage = 1;
+          pressHistory = [];
+          updateProgress();
+          nextStage();
+        }, 800);
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      timerEl.textContent = "05:00";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function gameOver() {
+      clearInterval(timerInterval);
+      explosionEl.style.display = 'flex';
+      setTimeout(resetModule, 1800);
+    }
+
+    function resetModule() {
+      explosionEl.style.display = 'none';
+      statusEl.textContent = '';
+      randomSetup();
+      startTimer();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    randomSetup();
+    startTimer();
+  </script>
+</body>
+</html>

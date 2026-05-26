@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Morse Code</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 520px;
+      background: #222;
+      border: 14px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ff0;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 8px;
+      border: 3px solid #f00;
+      margin-bottom: 15px;
+    }
+
+    .light-container {
+      text-align: center;
+      margin: 25px 0;
+    }
+
+    #light {
+      width: 100px;
+      height: 100px;
+      background: #300;
+      border: 10px solid #f00;
+      border-radius: 50%;
+      margin: 0 auto;
+      box-shadow: 0 0 25px #f00;
+      transition: background 0.05s;
+    }
+
+    .freq {
+      background: #000;
+      color: #0f0;
+      font-size: 28px;
+      text-align: center;
+      padding: 12px;
+      margin: 15px 0;
+      border: 3px solid #555;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 18px;
+      background: #333;
+      color: #fff;
+      border: 3px solid #666;
+      cursor: pointer;
+    }
+
+    button:hover { background: #555; }
+    button:active { background: #0a0; }
+
+    .tx-btn {
+      background: #006600;
+      font-size: 22px;
+      padding: 15px 40px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 18px;
+      min-height: 30px;
+      margin-top: 10px;
+    }
+
+    .explosion {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 0, 0, 0.92);
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: bold;
+      z-index: 10;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">MORSE CODE</div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="light-container">
+      <div id="light"></div>
+      <div style="margin-top:10px; font-size:14px;">SIGNAL</div>
+    </div>
+
+    <div class="freq" id="frequency">3.500 MHz</div>
+
+    <div class="controls">
+      <button onclick="changeFreq(-0.001)">−</button>
+      <button onclick="changeFreq(0.001)">+</button>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="tx-btn" onclick="transmit()">TRANSMIT (TX)</button>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div class="explosion" id="explosion">💥 BOOM! 💥</div>
+  </div>
+
+  <script>
+    const light = document.getElementById('light');
+    const freqEl = document.getElementById('frequency');
+    const statusEl = document.getElementById('status');
+    const timerEl = document.getElementById('timer');
+    const explosionEl = document.getElementById('explosion');
+
+    let timeLeft = 300;
+    let timerInterval = null;
+    let currentFreq = 3.500;
+    let currentWord = "";
+    let isFlashing = false;
+
+    // Slower, readable timing
+    const TIMING = {
+      DOT: 280,
+      DASH: 1000,
+      LETTER_GAP: 500,
+      WORD_GAP: 2000,
+      FLASH_INTERVAL: 350
+    };
+
+    const morseWords = {
+      "shell": 3.505, "halls": 3.515, "slick": 3.522, "trick": 3.532,
+      "boxes": 3.535, "leaks": 3.542, "strobe": 3.545, "bistro": 3.552,
+      "flick": 3.555, "bombs": 3.565, "break": 3.572, "brick": 3.575,
+      "steak": 3.582, "sting": 3.592, "vector": 3.595, "beats": 3.600
+    };
+
+    const morseCode = {
+      "A": ".-", "B": "-...", "C": "-.-.", "D": "-..", "E": ".", "F": "..-.",
+      "G": "--.", "H": "....", "I": "..", "J": ".---", "K": "-.-", "L": ".-..",
+      "M": "--", "N": "-.", "O": "---", "P": ".--.", "Q": "--.-", "R": ".-.",
+      "S": "...", "T": "-", "U": "..-", "V": "...-", "W": ".--", "X": "-..-",
+      "Y": "-.--", "Z": "--.."
+    };
+
+    function getMorseForWord(word) {
+      return word.toUpperCase().split('').map(c => morseCode[c] || "").join(" ");
+    }
+
+    function flashMorse() {
+      if (isFlashing) return;
+      isFlashing = true;
+
+      const morse = getMorseForWord(currentWord);
+      let sequence = [];
+
+      morse.split('').forEach(char => {
+        if (char === '.') sequence.push(TIMING.DOT);
+        if (char === '-') sequence.push(TIMING.DASH);
+        if (char === ' ') sequence.push(TIMING.LETTER_GAP);
+      });
+
+      let i = 0;
+      let repeatCount = 0;
+
+      const flashInterval = setInterval(() => {
+        if (repeatCount >= 2) {
+          clearInterval(flashInterval);
+          light.style.background = "#300";
+          isFlashing = false;
+          return;
+        }
+
+        const current = sequence[i % sequence.length];
+
+        if (current > 100) {
+          light.style.background = "#ff0";
+          light.style.boxShadow = "0 0 50px #ff0";
+          setTimeout(() => {
+            light.style.background = "#300";
+            light.style.boxShadow = "0 0 25px #f00";
+          }, current);
+        }
+
+        i++;
+
+        if (i % sequence.length === 0) {
+          repeatCount++;
+          i = 0;
+        }
+      }, TIMING.FLASH_INTERVAL);
+    }
+
+    function randomSetup() {
+      const words = Object.keys(morseWords);
+      currentWord = words[Math.floor(Math.random() * words.length)];
+      currentFreq = 3.500;
+      freqEl.textContent = "3.500 MHz";
+      statusEl.textContent = "Listening for signal...";
+    }
+
+    function changeFreq(delta) {
+      currentFreq = Math.max(3.500, Math.min(3.600, currentFreq + delta));
+      freqEl.textContent = currentFreq.toFixed(3) + " MHz";
+    }
+
+    function transmit() {
+      if (Math.abs(currentFreq - morseWords[currentWord]) < 0.0015) {
+        statusEl.textContent = "✅ Correct frequency transmitted!";
+        setTimeout(() => {
+          alert("✅ MORSE CODE MODULE SOLVED!");
+          resetModule();
+        }, 800);
+      } else {
+        statusEl.textContent = "✘ Wrong frequency!";
+        gameOver();
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      timerEl.textContent = "05:00";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60);
+        const sec = (timeLeft % 60);
+        timerEl.textContent = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+
+        // Restart Morse signal at the start of every minute (4,3,2,1)
+        if (sec === 0 && min <= 4 && min >= 1) {
+          flashMorse();
+        }
+
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function gameOver() {
+      clearInterval(timerInterval);
+      explosionEl.style.display = 'flex';
+      setTimeout(resetModule, 1800);
+    }
+
+    function resetModule() {
+      explosionEl.style.display = 'none';
+      statusEl.textContent = '';
+      randomSetup();
+      startTimer();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+      if (e.key === 'ArrowRight') changeFreq(0.001);
+      if (e.key === 'ArrowLeft') changeFreq(-0.001);
+    });
+
+    // Initialize
+    randomSetup();
+    startTimer();
+    // Start first signal
+    setTimeout(flashMorse, 800);
+  </script>
+</body>
+</html>

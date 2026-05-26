@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Wires</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 420px;
+      background: #222;
+      border: 12px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ff0;
+    }
+
+    .serial {
+      text-align: center;
+      background: #000;
+      padding: 6px;
+      font-size: 18px;
+      margin-bottom: 15px;
+      border: 2px solid #555;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 8px;
+      border: 3px solid #f00;
+      margin-bottom: 20px;
+    }
+
+    .wires-container {
+      background: #111;
+      padding: 20px;
+      border: 4px solid #333;
+      min-height: 280px;
+    }
+
+    .wire {
+      height: 42px;
+      margin: 12px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+    }
+
+    .wire.cut {
+      opacity: 0.3;
+      filter: brightness(0.6);
+      cursor: default;
+    }
+
+    .wire::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 4px;
+      background: #222;
+      opacity: 0.4;
+    }
+
+    .explosion {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 0, 0, 0.92);
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: bold;
+      z-index: 10;
+      border-radius: 15px;
+    }
+
+    .info {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">WIRES</div>
+    <div class="serial">Serial No: <span id="serial">ABCDEF</span></div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="wires-container" id="wires"></div>
+
+    <div class="explosion" id="explosion">💥 BOOM! 💥</div>
+  </div>
+
+  <script>
+    const timerEl = document.getElementById('timer');
+    const serialEl = document.getElementById('serial');
+    const wiresContainer = document.getElementById('wires');
+    const explosionEl = document.getElementById('explosion');
+
+    let timeLeft = 300;
+    let timerInterval = null;
+    let correctWireIndex = -1;
+    let wires = [];
+    let cutWires = new Set();
+
+    const colors = [
+      {name: 'red',    hex: '#c00'},
+      {name: 'blue',   hex: '#00a'},
+      {name: 'yellow', hex: '#cc0'},
+      {name: 'black',  hex: '#222'},
+      {name: 'white',  hex: '#ddd'}
+    ];
+
+    function randomSerial() {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let serial = '';
+      for (let i = 0; i < 5; i++) serial += letters[Math.floor(Math.random()*26)];
+      const lastDigit = Math.floor(Math.random()*10);
+      serial += lastDigit;
+      serialEl.textContent = serial;
+      return lastDigit;
+    }
+
+    function generateWires() {
+      const numWires = Math.floor(Math.random() * 4) + 3; // 3 to 6
+      wires = [];
+      
+      for (let i = 0; i < numWires; i++) {
+        wires.push(colors[Math.floor(Math.random() * colors.length)]);
+      }
+
+      const lastDigit = randomSerial();
+      const isOdd = lastDigit % 2 === 1;
+
+      // Determine correct wire based on rules
+      correctWireIndex = getCorrectWireIndex(wires, numWires, isOdd);
+    }
+
+    function getCorrectWireIndex(wiresList, count, serialOdd) {
+      const colorNames = wiresList.map(w => w.name);
+      const redCount = colorNames.filter(c => c === 'red').length;
+      const blueCount = colorNames.filter(c => c === 'blue').length;
+      const yellowCount = colorNames.filter(c => c === 'yellow').length;
+      const blackCount = colorNames.filter(c => c === 'black').length;
+      const whiteCount = colorNames.filter(c => c === 'white').length;
+
+      if (count === 3) {
+        if (redCount === 0) return 1;                    // second wire (0-indexed)
+        if (colorNames[colorNames.length-1] === 'white') return colorNames.length-1;
+        if (blueCount > 1) return colorNames.lastIndexOf('blue');
+        return colorNames.length-1;
+      }
+
+      if (count === 4) {
+        if (redCount > 1 && serialOdd) return colorNames.lastIndexOf('red');
+        if (colorNames[colorNames.length-1] === 'yellow' && redCount === 0) return 0;
+        if (blueCount === 1) return 0;
+        if (yellowCount > 1) return colorNames.length-1;
+        return 1;
+      }
+
+      if (count === 5) {
+        if (colorNames[colorNames.length-1] === 'black' && serialOdd) return 3;
+        if (redCount === 1 && yellowCount > 1) return 0;
+        if (blackCount === 0) return 1;
+        return 0;
+      }
+
+      if (count === 6) {
+        if (yellowCount === 0 && serialOdd) return 2;
+        if (yellowCount === 1 && whiteCount > 1) return 3;
+        if (redCount === 0) return colorNames.length-1;
+        return 3;
+      }
+      return 1; // fallback
+    }
+
+    function renderWires() {
+      wiresContainer.innerHTML = '';
+      cutWires.clear();
+
+      wires.forEach((wire, index) => {
+        const wireEl = document.createElement('div');
+        wireEl.className = 'wire';
+        wireEl.style.backgroundColor = wire.hex;
+        wireEl.dataset.index = index;
+
+        wireEl.addEventListener('click', () => cutWire(index, wireEl));
+
+        wiresContainer.appendChild(wireEl);
+      });
+    }
+
+    function cutWire(index, element) {
+      if (cutWires.has(index)) return;
+
+      cutWires.add(index);
+      element.classList.add('cut');
+
+      if (index === correctWireIndex) {
+        setTimeout(() => {
+          alert("✅ Wires module solved!");
+          resetModule();
+        }, 300);
+      } else {
+        gameOver();
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      timerEl.textContent = "05:00";
+      timerEl.style.color = "#f00";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function gameOver() {
+      clearInterval(timerInterval);
+      explosionEl.style.display = 'flex';
+      setTimeout(resetModule, 1600);
+    }
+
+    function resetModule() {
+      explosionEl.style.display = 'none';
+      generateWires();
+      renderWires();
+      startTimer();
+    }
+
+    // Keyboard reset
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    generateWires();
+    renderWires();
+    startTimer();
+  </script>
+</body>
+</html>

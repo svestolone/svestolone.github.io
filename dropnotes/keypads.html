@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Keypads</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 640px;
+      background: #222;
+      border: 16px solid #444;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 26px;
+      color: #ff0;
+      margin-bottom: 15px;
+    }
+
+    .timer {
+      font-size: 34px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 10px;
+      border: 4px solid #f00;
+      margin-bottom: 25px;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      background: #000;
+      padding: 30px;
+      border: 8px solid #555;
+      margin: 20px auto;
+      width: fit-content;
+    }
+
+    .symbol {
+      width: 130px;
+      height: 130px;
+      background: #222;
+      border: 5px solid #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .symbol:hover {
+      border-color: #0f0;
+      transform: scale(1.08);
+    }
+
+    .symbol img {
+      width: 110px;
+      height: 110px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 20px;
+      min-height: 60px;
+      margin-top: 15px;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      border: 6px solid #0f0;
+      padding: 40px 30px;
+      text-align: center;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 0 30px #0f0;
+      border-radius: 10px;
+    }
+
+    .explosion-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #300;
+      border: 6px solid #f00;
+      padding: 40px 30px;
+      text-align: center;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 0 30px #f00;
+      border-radius: 10px;
+    }
+
+    .popup button, .explosion-popup button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 18px;
+      background: #0a0;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .explosion-popup button {
+      background: #a00;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">KEYPADS</div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="keypad" id="keypad"></div>
+
+    <div class="status" id="status">Waiting for partner...</div>
+  </div>
+
+  <!-- Success Popup -->
+  <div class="popup" id="successPopup">
+    <h1 style="color:#0f0;">✅ MODULE SOLVED!</h1>
+    <p>Keypads has been disarmed.</p>
+    <button onclick="resetModule()">Next Round</button>
+  </div>
+
+  <!-- Explosion Popup -->
+  <div class="explosion-popup" id="explosionPopup">
+    <h1 style="color:#f00;">💥 BOOM! 💥</h1>
+    <p>Wrong sequence!</p>
+    <button onclick="resetModule()">Try Again</button>
+  </div>
+
+  <script>
+    const allSymbols = Array.from({length: 27}, (_, i) => `c${i+1}.png`);
+
+    let keypadSymbols = [];
+    let correctOrder = [];
+    let pressed = [];
+    let timeLeft = 300;
+    let timerInterval = null;
+    let isSolved = false;
+
+    function randomSetup() {
+      const colIndex = Math.floor(Math.random() * 6);
+      const chosenColumn = [
+      ["c1.png", "c2.png", "c3.png", "c4.png", "c5.png", "c6.png", "c7.png"],   // Column 1
+      ["c8.png", "c1.png", "c7.png","c9.png","c10.png","c6.png","c11.png"],  // Column 2
+      ["c12.png","c13.png","c9.png","c14.png","c15.png","c3.png","c10.png"],  // Column 3
+      ["c16.png","c17.png","c18.png","c5.png","c14.png","c11.png","c19.png"],  // Column 4 (example)
+      ["c20.png","c19.png", "c18.png","c21.png", "c17.png","c22.png", "c23.png"],   // Column 5
+      ["c16.png","c8.png", "c24.png","c25.png","c20.png","c26.png","c27.png"]   // Column 6
+      ][colIndex];
+
+      let shuffled = [...chosenColumn].sort(() => Math.random() - 0.5);
+      keypadSymbols = shuffled.slice(0, 4);
+
+      correctOrder = keypadSymbols.sort((a, b) => 
+        chosenColumn.indexOf(a) - chosenColumn.indexOf(b)
+      );
+
+      pressed = [];
+      isSolved = false;
+      renderKeypad();
+      document.getElementById('status').textContent = "Waiting for partner...";
+    }
+
+    function renderKeypad() {
+      const container = document.getElementById('keypad');
+      container.innerHTML = '';
+
+      let displayOrder = [...keypadSymbols].sort(() => Math.random() - 0.5);
+
+      displayOrder.forEach(src => {
+        const div = document.createElement('div');
+        div.className = 'symbol';
+        div.innerHTML = `<img src="${src}" alt="">`;
+        div.onclick = () => handlePress(src);
+        container.appendChild(div);
+      });
+    }
+
+    function handlePress(symbol) {
+      if (isSolved) return;
+      pressed.push(symbol);
+
+      if (pressed.length === 4) {
+        const isCorrect = pressed.every((sym, i) => sym === correctOrder[i]);
+
+        if (isCorrect) {
+          isSolved = true;
+          clearInterval(timerInterval);
+          document.getElementById('successPopup').style.display = 'block';
+        } else {
+          isSolved = true;
+          clearInterval(timerInterval);
+          document.getElementById('explosionPopup').style.display = 'block';
+        }
+      } else {
+        document.getElementById('status').textContent = `Pressed ${pressed.length}/4`;
+      }
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      const timerEl = document.getElementById('timer');
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+        const s = (timeLeft%60).toString().padStart(2,'0');
+        timerEl.textContent = `${m}:${s}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('explosionPopup').style.display = 'block';
+        }
+      }, 1000);
+    }
+
+    function resetModule() {
+      document.getElementById('successPopup').style.display = 'none';
+      document.getElementById('explosionPopup').style.display = 'none';
+      document.getElementById('status').textContent = '';
+      pressed = [];
+      randomSetup();
+      startTimer();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    randomSetup();
+    startTimer();
+  </script>
+</body>
+</html>

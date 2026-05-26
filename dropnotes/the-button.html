@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - The Button</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 420px;
+      background: #222;
+      border: 12px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #ff0;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 8px;
+      border: 3px solid #f00;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 20px auto;
+    }
+
+    #theButton {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 12px solid #111;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.1s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+    }
+
+    .strip {
+      position: absolute;
+      right: -60px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 140px;
+      border: 6px solid #111;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+
+    .batteries, .indicators {
+      background: #333;
+      padding: 10px;
+      border: 2px solid #555;
+      border-radius: 8px;
+      width: 48%;
+    }
+
+    .explosion-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #300;
+      border: 6px solid #f00;
+      padding: 40px 30px;
+      text-align: center;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 0 30px #f00;
+      border-radius: 10px;
+    }
+
+    .explosion-popup button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 18px;
+      background: #a00;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="header">THE BUTTON</div>
+    <div class="timer" id="timer">05:00</div>
+
+    <div class="button-container">
+      <button id="theButton">PRESS</button>
+      <div class="strip" id="strip">STRIP</div>
+    </div>
+
+    <div class="info">
+      <div class="batteries">
+        <strong>Batteries:</strong> <span id="batteryCount">2</span>
+      </div>
+      <div class="indicators">
+        <strong>Indicators:</strong><br>
+        <span id="indicators">CAR • FRK</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Explosion Popup -->
+  <div class="explosion-popup" id="explosionPopup">
+    <h1 style="color:#f00;">💥 BOOM! 💥</h1>
+    <p>The bomb has exploded.</p>
+    <button onclick="resetModule()">Try Again</button>
+  </div>
+
+  <script>
+    const button = document.getElementById('theButton');
+    const strip = document.getElementById('strip');
+    const timerEl = document.getElementById('timer');
+    const batteryEl = document.getElementById('batteryCount');
+    const indicatorsEl = document.getElementById('indicators');
+
+    let buttonColor, buttonLabel, batteries, litIndicators;
+    let isHeld = false;
+    let stripColor = '';
+    let timeLeft = 300;
+    let timerInterval = null;
+
+    const colors = ['red', 'blue', 'white', 'yellow'];
+    const labels = ['PRESS', 'HOLD', 'ABORT', 'DETONATE'];
+
+    function randomSetup() {
+      buttonColor = colors[Math.floor(Math.random() * colors.length)];
+      buttonLabel = labels[Math.floor(Math.random() * labels.length)];
+      
+      batteries = Math.floor(Math.random() * 6); // 0 to 5
+      batteryEl.textContent = batteries;
+
+      const possibleIndicators = ['CAR', 'FRK', 'NSA', 'MSA', 'BOB', 'IND'];
+      litIndicators = [];
+      if (Math.random() > 0.3) litIndicators.push(possibleIndicators[Math.floor(Math.random()*possibleIndicators.length)]);
+      if (Math.random() > 0.5) litIndicators.push(possibleIndicators[Math.floor(Math.random()*possibleIndicators.length)]);
+      
+      indicatorsEl.innerHTML = litIndicators.length ? litIndicators.join(' • ') : 'None';
+
+      button.style.backgroundColor = buttonColor;
+      button.style.color = (buttonColor === 'white' || buttonColor === 'yellow') ? 'black' : 'white';
+      button.textContent = buttonLabel;
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      timerEl.textContent = "05:00";
+      timerEl.style.color = "#f00";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function gameOver() {
+      clearInterval(timerInterval);
+      document.getElementById('explosionPopup').style.display = 'block';
+    }
+
+    function resetModule() {
+      document.getElementById('explosionPopup').style.display = 'none';
+      strip.style.display = 'none';
+      isHeld = false;
+      button.style.transform = 'scale(1)';
+      randomSetup();
+      startTimer();           // Reset timer to 05:00
+    }
+
+    function shouldHoldButton() {
+      if (buttonColor === 'blue' && buttonLabel === 'ABORT') return true;
+      if (batteries > 1 && buttonLabel === 'DETONATE') return false;
+      if (buttonColor === 'white' && litIndicators.includes('CAR')) return true;
+      if (batteries > 2 && litIndicators.includes('FRK')) return false;
+      if (buttonColor === 'yellow') return true;
+      if (buttonColor === 'red' && buttonLabel === 'HOLD') return false;
+      return true;
+    }
+
+    function getStripColor() {
+      const rand = Math.random();
+      if (rand < 0.25) return 'blue';
+      if (rand < 0.5) return 'white';
+      if (rand < 0.75) return 'yellow';
+      return 'red';
+    }
+
+    button.addEventListener('mousedown', () => {
+      if (isHeld) return;
+      isHeld = true;
+      button.style.transform = 'scale(0.95)';
+
+      const shouldHold = shouldHoldButton();
+
+      if (shouldHold) {
+        stripColor = getStripColor();
+        strip.style.backgroundColor = stripColor;
+        strip.style.color = (stripColor === 'white' || stripColor === 'yellow') ? 'black' : 'white';
+        strip.textContent = stripColor.toUpperCase();
+        strip.style.display = 'flex';
+      } else {
+        setTimeout(() => {
+          button.style.transform = 'scale(1)';
+          isHeld = false;
+          alert("✅ Button tapped successfully!");
+          resetModule();
+        }, 120);
+      }
+    });
+
+    button.addEventListener('mouseup', () => {
+      if (!isHeld) return;
+
+      const releaseTime = timerEl.textContent;
+      const hasDigit = (digit) => releaseTime.includes(digit);
+
+      let correct = false;
+      switch(stripColor) {
+        case 'blue': correct = hasDigit('4'); break;
+        case 'white': correct = hasDigit('1'); break;
+        case 'yellow': correct = hasDigit('5'); break;
+        default: correct = hasDigit('1'); break;
+      }
+
+      strip.style.display = 'none';
+      button.style.transform = 'scale(1)';
+      isHeld = false;
+
+      if (correct) {
+        alert("✅ Module Solved!");
+        resetModule();
+      } else {
+        gameOver();
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    randomSetup();
+    startTimer();
+  </script>
+</body>
+</html>

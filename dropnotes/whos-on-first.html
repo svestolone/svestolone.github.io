@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTaNE - Who's on First</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .module {
+      width: 580px;
+      background: #222;
+      border: 14px solid #444;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 40px rgba(0, 255, 0, 0.3);
+      position: relative;
+      display: flex;
+    }
+
+    .main-content {
+      flex: 1;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ff0;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f00;
+      text-align: center;
+      background: #000;
+      padding: 8px;
+      border: 3px solid #f00;
+      margin-bottom: 15px;
+    }
+
+    .display {
+      background: #000;
+      color: #0f0;
+      font-size: 32px;
+      text-align: center;
+      padding: 18px;
+      border: 4px solid #555;
+      margin-bottom: 20px;
+      min-height: 55px;
+      font-weight: bold;
+    }
+
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .word-btn {
+      background: #333;
+      color: #fff;
+      border: 4px solid #666;
+      padding: 16px 10px;
+      font-size: 17px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.1s;
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .word-btn:hover { background: #555; }
+    .word-btn:active { transform: scale(0.96); background: #0a0; }
+
+    /* Right Side Indicator Panel */
+    .side-panel {
+      width: 50px;
+      background: #111;
+      border: 4px solid #555;
+      margin-left: 20px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .light {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #666;
+      border-radius: 50%;
+      background: #222;
+      transition: all 0.3s;
+    }
+
+    .light.solved {
+      background: #0f0;
+      box-shadow: 0 0 15px #0f0;
+    }
+
+    .explosion {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 0, 0, 0.92);
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: bold;
+      z-index: 10;
+      border-radius: 15px;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 18px;
+      min-height: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="module">
+    <div class="main-content">
+      <div class="header">WHO'S ON FIRST</div>
+      <div class="timer" id="timer">05:00</div>
+
+      <div class="display" id="display">READY</div>
+
+      <div class="buttons-grid" id="buttons"></div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <!-- Right Side Indicator -->
+    <div class="side-panel">
+      <div class="light" id="light1"></div>
+      <div class="light" id="light2"></div>
+      <div class="light" id="light3"></div>
+    </div>
+
+    <div class="explosion" id="explosion">💥 BOOM! 💥</div>
+  </div>
+
+  <script>
+    const displayEl = document.getElementById('display');
+    const buttonsGrid = document.getElementById('buttons');
+    const timerEl = document.getElementById('timer');
+    const statusEl = document.getElementById('status');
+    const explosionEl = document.getElementById('explosion');
+    const lights = [
+      document.getElementById('light1'),
+      document.getElementById('light2'),
+      document.getElementById('light3')
+    ];
+
+    let timeLeft = 300;
+    let timerInterval = null;
+    let currentDisplay = "";
+    let correctWord = "";
+    let solves = 0;
+
+    // (All the data arrays: displayWords, buttonPool, step1, step2 are the same as previous version)
+    const displayWords = ["YES","FIRST","DISPLAY","OKAY","SAYS","NOTHING","BLANK","NO","LED","LEAD","READ","RED","REED","LEED","HOLD ON","YOU","YOU ARE","YOUR","YOU'RE","UR","THERE","THEY'RE","THEIR","THEY ARE","SEE","C","CEE"];
+    
+    const buttonPool = ["YES","OKAY","WHAT","MIDDLE","LEFT","PRESS","RIGHT","BLANK","READY","NO","FIRST","UHHH","NOTHING","WAIT","YOU","YOU ARE","YOUR","YOU'RE","UR","U","UH HUH","UH UH","WHAT?","DONE","NEXT","HOLD","SURE","LIKE","HOLD ON"];
+
+    const step1 = { /* same as before */ 
+      "YES": "MIDDLE RIGHT", "FIRST": "TOP RIGHT", "DISPLAY": "BOTTOM RIGHT",
+      "OKAY": "TOP RIGHT", "SAYS": "BOTTOM RIGHT", "NOTHING": "MIDDLE LEFT",
+      "BLANK": "MIDDLE RIGHT", "NO": "BOTTOM RIGHT", "LED": "BOTTOM LEFT",
+      "LEAD": "MIDDLE LEFT", "READ": "MIDDLE RIGHT", "RED": "MIDDLE RIGHT",
+      "REED": "BOTTOM LEFT", "LEED": "BOTTOM LEFT", "HOLD ON": "BOTTOM RIGHT",
+      "YOU": "MIDDLE RIGHT", "YOU ARE": "BOTTOM LEFT", "YOUR": "MIDDLE RIGHT",
+      "YOU'RE": "MIDDLE RIGHT", "UR": "TOP RIGHT", "THERE": "MIDDLE LEFT",
+      "THEY'RE": "BOTTOM LEFT", "THEIR": "MIDDLE RIGHT", "THEY ARE": "MIDDLE RIGHT",
+      "SEE": "BOTTOM RIGHT", "C": "MIDDLE RIGHT", "CEE": "MIDDLE RIGHT"
+    };
+
+    const step2 = { /* same complete list as previous version */ 
+      "READY": ["YES", "OKAY", "WHAT", "MIDDLE", "LEFT", "PRESS", "RIGHT", "BLANK", "READY", "NO", "FIRST", "UHHH", "NOTHING", "WAIT"],
+      "FIRST": ["LEFT", "OKAY", "YES", "MIDDLE", "NO", "RIGHT", "NOTHING", "UHHH", "WAIT", "READY", "BLANK", "WHAT", "PRESS", "FIRST"],
+      "NO": ["BLANK", "UHHH", "WAIT", "FIRST", "WHAT", "READY", "RIGHT", "YES", "NOTHING", "LEFT", "PRESS", "OKAY", "NO", "MIDDLE"],
+      "BLANK": ["WAIT", "RIGHT", "OKAY", "MIDDLE", "BLANK", "PRESS", "READY", "NOTHING", "NO", "WHAT", "LEFT", "UHHH", "YES", "FIRST"],
+      "NOTHING": ["UHHH", "RIGHT", "OKAY", "MIDDLE", "YES", "BLANK", "NO", "PRESS", "LEFT", "WHAT", "WAIT", "FIRST", "READY"],
+      "YES": ["OKAY", "RIGHT", "UHHH", "MIDDLE", "FIRST", "WHAT", "PRESS", "READY", "NOTHING", "YES", "LEFT", "BLANK", "NO", "WAIT"],
+      "WHAT": ["UHHH", "WHAT", "LEFT", "NOTHING", "READY", "BLANK", "MIDDLE", "NO", "OKAY", "FIRST", "WAIT", "YES", "PRESS", "RIGHT"],
+      "UHHH": ["READY", "NOTHING", "LEFT", "WHAT", "OKAY", "YES", "RIGHT", "NO", "PRESS", "BLANK", "UHHH", "MIDDLE", "WAIT", "FIRST"],
+      "LEFT": ["RIGHT", "LEFT", "FIRST", "NO", "MIDDLE", "YES", "BLANK", "WHAT", "UHHH", "WAIT", "PRESS", "READY", "OKAY", "NOTHING"],
+      "RIGHT": ["YES", "NOTHING", "READY", "PRESS", "NO", "WAIT", "WHAT", "RIGHT", "MIDDLE", "LEFT", "UHHH", "BLANK", "OKAY", "FIRST"],
+      "MIDDLE": ["BLANK", "READY", "OKAY", "WHAT", "NOTHING", "PRESS", "NO", "WAIT", "LEFT", "MIDDLE", "RIGHT", "FIRST", "UHHH", "YES"],
+      "OKAY": ["MIDDLE", "NO", "FIRST", "YES", "UHHH", "NOTHING", "WAIT", "OKAY", "LEFT", "READY", "BLANK", "PRESS", "WHAT", "RIGHT"],
+      "WAIT": ["UHHH", "NO", "BLANK", "OKAY", "YES", "LEFT", "FIRST", "PRESS", "WHAT", "WAIT", "NOTHING", "READY", "RIGHT", "MIDDLE"],
+      "PRESS": ["RIGHT", "MIDDLE", "YES", "READY", "PRESS", "OKAY", "NOTHING", "UHHH", "BLANK", "LEFT", "FIRST", "WHAT", "NO", "WAIT"],
+      "YOU": ["SURE", "YOU ARE", "YOUR", "YOU'RE", "NEXT", "UH HUH", "UR", "HOLD", "WHAT?", "YOU", "UH HUH", "LIKE", "DONE", "U"],
+      "YOU ARE": ["YOUR", "NEXT", "LIKE", "UH HUH", "WHAT?", "DONE", "UH UH", "HOLD", "YOU", "U", "YOU'RE", "SURE", "UR", "YOU ARE"],
+      "YOUR": ["UH HUH", "YOU ARE", "UH HUH", "YOUR", "NEXT", "UR", "SURE", "U", "YOU'RE", "HOLD", "LIKE", "DONE"],
+      "YOU'RE": ["UH HUH", "YOUR", "NEXT", "UH HUH", "UR", "SURE", "U", "YOU ARE", "YOU", "WHAT?", "HOLD", "DONE"],
+      "UR": ["DONE", "U", "UR", "UH HUH", "WHAT?", "SURE", "YOUR", "HOLD", "YOU'RE", "LIKE", "NEXT", "UH HUH", "YOU ARE", "YOU"],
+      "U": ["UH HUH", "SURE", "NEXT", "WHAT?", "YOU'RE", "UR", "UH UH", "DONE", "U", "YOU", "LIKE", "HOLD", "YOU ARE", "YOUR"],
+      "UH HUH": ["UH HUH", "YOUR", "YOU ARE", "YOU", "DONE", "HOLD", "UH UH", "NEXT", "SURE", "LIKE", "YOU'RE", "UR", "U", "WHAT?"],
+      "UH UH": ["UR", "U", "YOU ARE", "YOU'RE", "NEXT", "UH UH", "DONE", "YOU", "UH HUH", "LIKE", "YOUR", "SURE", "HOLD", "WHAT?"],
+      "WHAT?": ["YOU", "HOLD", "YOU'RE", "YOUR", "U", "DONE", "UH HUH", "LIKE", "YOU ARE", "UH HUH", "UR", "NEXT", "WHAT?", "SURE"],
+      "DONE": ["SURE", "UH HUH", "NEXT", "WHAT?", "YOU'RE", "HOLD", "LIKE", "DONE", "YOU", "U", "YOU ARE", "UH HUH", "UR", "YOUR"],
+      "NEXT": ["WHAT?", "UH HUH", "NEXT", "UH HUH", "YOUR", "U", "DONE", "UH HUH", "LIKE", "YOU", "YOU ARE", "SURE"],
+      "HOLD": ["YOU ARE", "U", "DONE", "UH HUH", "YOU", "UR", "SURE", "WHAT?", "YOU'RE", "NEXT", "HOLD", "UH HUH", "YOUR", "LIKE"],
+      "SURE": ["YOU ARE", "DONE", "LIKE", "YOU'RE", "YOU", "HOLD", "UH HUH", "UR", "SURE", "U", "WHAT?", "NEXT", "YOUR", "UH HUH"],
+      "LIKE": ["YOU'RE", "NEXT", "U", "UR", "HOLD", "DONE", "UH HUH", "WHAT?", "UH HUH", "YOU", "LIKE", "SURE", "YOU ARE", "YOUR"],
+      "REED": ["HOLD ON", "YOU", "YOU ARE", "YOUR", "YOU'RE", "UR", "U", "UH HUH", "UH UH", "WHAT?", "DONE", "NEXT", "HOLD", "SURE", "LIKE"],
+      "LEED": ["YOU", "YOU ARE", "YOUR", "YOU'RE", "UR", "U", "UH HUH", "UH UH", "WHAT?", "DONE", "NEXT", "HOLD", "SURE", "LIKE"],
+      "LED": ["YES", "OKAY", "WHAT", "MIDDLE", "LEFT", "PRESS", "RIGHT", "BLANK", "READY", "NO", "FIRST", "UHHH", "NOTHING", "WAIT"],
+      "READ": ["YES", "OKAY", "WHAT", "MIDDLE", "LEFT", "PRESS", "RIGHT", "BLANK", "READY", "NO", "FIRST", "UHHH", "NOTHING", "WAIT"]
+    };
+
+    function randomSetup() {
+      currentDisplay = displayWords[Math.floor(Math.random() * displayWords.length)];
+      displayEl.textContent = currentDisplay;
+
+      let available = buttonPool.filter(w => w !== currentDisplay);
+      let shuffled = [...available].sort(() => Math.random() - 0.5);
+      let buttonWords = shuffled.slice(0, 6);
+
+      const posToRead = step1[currentDisplay] || "MIDDLE RIGHT";
+      const labelToRead = getWordAtPosition(buttonWords, posToRead);
+
+      const priorityList = step2[labelToRead] || [];
+      correctWord = findFirstInList(buttonWords, priorityList);
+
+      renderButtons(buttonWords);
+    }
+
+    function getWordAtPosition(words, position) {
+      const map = { "TOP LEFT":0, "TOP RIGHT":1, "MIDDLE LEFT":2, "MIDDLE RIGHT":3, "BOTTOM LEFT":4, "BOTTOM RIGHT":5 };
+      return words[map[position]] || words[3];
+    }
+
+    function findFirstInList(buttonWords, priorityList) {
+      for (let word of priorityList) {
+        if (buttonWords.includes(word)) return word;
+      }
+      return buttonWords[0];
+    }
+
+    function renderButtons(buttonWords) {
+      buttonsGrid.innerHTML = '';
+      buttonWords.forEach(word => {
+        const btn = document.createElement('div');
+        btn.className = 'word-btn';
+        btn.textContent = word;
+
+        btn.addEventListener('click', () => {
+          if (word === correctWord) {
+            btn.style.backgroundColor = '#0a0';
+            statusEl.textContent = "✅ Correct!";
+            
+            solves++;
+            if (solves <= 3) lights[solves-1].classList.add('solved');
+
+            if (solves >= 3) {
+              setTimeout(() => {
+                alert("✅ WHO'S ON FIRST FULLY SOLVED!");
+                resetModule();
+              }, 800);
+            } else {
+              setTimeout(() => {
+                statusEl.textContent = `Solve ${solves}/3`;
+                randomSetup();
+              }, 800);
+            }
+          } else {
+            statusEl.textContent = "✘ Wrong!";
+            gameOver();
+          }
+        });
+        buttonsGrid.appendChild(btn);
+      });
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timeLeft = 300;
+      timerEl.textContent = "05:00";
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+
+        if (timeLeft <= 30) timerEl.style.color = "#ff0";
+        if (timeLeft <= 0) gameOver();
+      }, 1000);
+    }
+
+    function gameOver() {
+      clearInterval(timerInterval);
+      explosionEl.style.display = 'flex';
+      setTimeout(resetModule, 1800);
+    }
+
+    function resetModule() {
+      explosionEl.style.display = 'none';
+      statusEl.textContent = '';
+      solves = 0;
+      lights.forEach(l => l.classList.remove('solved'));
+      randomSetup();
+      startTimer();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'r') resetModule();
+    });
+
+    // Initialize
+    randomSetup();
+    startTimer();
+  </script>
+</body>
+</html>
