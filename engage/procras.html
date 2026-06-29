@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Semester Survival - Standard Compliance Engine</title>
+    <title>Semester Survival - Clean Engine</title>
     <style>
         body {
             background-color: #0f172a;
@@ -11,6 +11,7 @@
             padding: 20px;
             max-width: 600px;
             margin: 0 auto;
+            user-select: none;
         }
         .panel {
             background-color: #1e293b;
@@ -65,7 +66,7 @@
             font-family: monospace;
             padding: 10px;
             border-radius: 6px;
-            height: 80px;
+            height: 100px;
             overflow-y: auto;
             font-size: 12px;
         }
@@ -74,13 +75,13 @@
 <body>
 
     <h2 style="color:#818cf8; margin-bottom:5px;">🎓 Semester Survival Race</h2>
-    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Security Compliance Patched Layout.</p>
+    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Function mismatch fixed.</p>
 
     <!-- PLAYER INITIALIZATION PANEL -->
     <div class="panel">
         <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">1. SET PROFILE & INITIALIZE</label>
         <input id="username" type="text" value="Player1" style="padding:10px; border-radius:4px; border:1px solid #475569; background:#0f172a; color:white; width:150px;">
-        <button id="boot-btn" class="btn btn-indigo" style="padding:10px 20px;">Initialize Engine</button>
+        <button id="boot-btn" onclick="bootEngine()" class="btn btn-indigo" style="padding:10px 20px;">Initialize Engine</button>
     </div>
 
     <!-- LIVE LEADERBOARD / METRICS PANEL -->
@@ -108,21 +109,20 @@
     <div class="panel" style="background:#131b2e;">
         <span style="font-size:11px; font-weight:bold; color:#64748b;">2. INTERACTION DECISIONS</span>
         <div class="action-grid">
-            <button id="btn-now" class="btn btn-green">⚡ Do Now (-5s)</button>
-            <button id="btn-schedule" class="btn btn-blue">📅 Schedule Task</button>
-            <button id="btn-delegate" class="btn btn-amber">🤝 Delegate (-150pts)</button>
-            <button id="btn-ignore" class="btn btn-red">📱 Check Feed</button>
+            <button onclick="processDecision('now')" class="btn btn-green">⚡ Do Now (-5s)</button>
+            <button onclick="processDecision('schedule')" class="btn btn-blue">📅 Schedule Task</button>
+            <button onclick="processDecision('delegate')" class="btn btn-amber">🤝 Delegate (-150pts)</button>
+            <button onclick="processDecision('ignore')" class="btn btn-red">📱 Check Feed</button>
         </div>
     </div>
 
     <!-- THE SYSTEM TRACER LOG -->
     <div class="panel">
         <span style="font-size:11px; font-weight:bold; color:#94a3b8; display:block; margin-bottom:5px;">📊 BACKEND SYSTEM LOG TRACER</span>
-        <div id="system-log">System idling... ready for initialization.</div>
+        <div id="system-log">> System ready for initialization.</div>
     </div>
 
     <script>
-        // Use basic variable declarations for maximal runtime environment support
         var active = false;
         var score = 2000;
         var sanity = 100;
@@ -158,6 +158,32 @@
             var mStr = m < 10 ? "0" + m : m;
             var sStr = s < 10 ? "0" + s : s;
             return mStr + ":" + sStr;
+        }
+
+        function bootEngine() {
+            if (active) return;
+            active = true;
+            
+            var bootBtn = document.getElementById("boot-btn");
+            if (bootBtn) {
+                bootBtn.disabled = true;
+                bootBtn.style.backgroundColor = "#334155";
+                bootBtn.innerText = "Engine Engaged";
+            }
+            
+            printLog("Engine activation validated.");
+            generateTask();
+
+            clockLoop = setInterval(function() {
+                timeRemaining--;
+                var timerEl = document.getElementById("v-timer");
+                if (timerEl) {
+                    timerEl.innerText = formatDisplayTime(timeRemaining);
+                }
+                if (timeRemaining <= 0) {
+                    shutDownEngine("TIMELIMIT REACHED");
+                }
+            }, 1000);
         }
 
         function generateTask() {
@@ -199,7 +225,7 @@
                 return;
             }
 
-            printLog("Register action sequence: " + type);
+            printLog("Action sequence: " + type);
 
             if (type === 'now') {
                 score += currentTask.pts;
@@ -234,26 +260,7 @@
             active = false;
             
             document.getElementById("v-title").innerText = "🏁 SIMULATION OVER";
-            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Leaderboard Score: " + score.toLocaleString();
+            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Score: " + score.toLocaleString();
             
             printLog("--- FINAL RUN METRICS ---");
-            printLog("Traps Run: " + trapsHit);
-            printLog("Crises Faced: " + crisesFaced);
-            printLog("Items Scheduled: " + tasksManaged);
-        }
-
-        // Direct standard system event listener mappings (Ditches inline html triggers entirely)
-        document.addEventListener("DOMContentLoaded", function() {
-            printLog("System security scan complete. Listening for events.");
-            
-            document.getElementById("boot-btn").addEventListener("click", function() {
-                if (active) return;
-                active = true;
-                this.disabled = true;
-                this.style.backgroundColor = "#334155";
-                this.innerText = "Engine Engaged";
-                
-                printLog("Engine activation validated.");
-                generateTask();
-
 
