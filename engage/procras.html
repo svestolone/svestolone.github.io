@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Semester Survival - Single Screen Engine</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .panel {
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .btn {
+            padding: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+        .btn-green { background-color: #16a34a; }
+        .btn-blue { background-color: #2563eb; }
+        .btn-amber { background-color: #d97406; }
+        .btn-red { background-color: #dc2626; }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .progress-container {
+            background-color: #0f172a;
+            height: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background-color: #f59e0b;
+            height: 100%;
+            width: 100%;
+        }
+        #system-log {
+            background-color: #000;
+            color: #22c55e;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 6px;
+            height: 80px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="color:#818cf8; margin-bottom:5px;">🎓 Semester Survival Race</h2>
+    <p style="color:#94a3b8; margin-top:0; font-size:13px;">If engine freezes, check the green System Log box below.</p>
+
+    <!-- PLAYER INITIALIZATION PANEL -->
+    <div class="panel">
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">1. SET PROFILE & INITIALIZE</label>
+        <input id="username" type="text" value="Player1" style="padding:10px; border-radius:4px; border:1px solid #475569; background:#0f172a; color:white; width:150px;">
+        <button onclick="bootEngine()" id="boot-btn" style="padding:10px 20px; font-weight:bold; background-color:#4f46e5; color:white; border:none; border-radius:4px; cursor:pointer;">Initialize Engine</button>
+    </div>
+
+    <!-- LIVE LEADERBOARD / METRICS PANEL -->
+    <div class="panel grid-3">
+        <div>⏱️ TIMER<br><span id="v-timer" style="color:#f59e0b; font-size:20px;">05:00</span></div>
+        <div>🏆 SCORE<br><span id="v-score" style="color:#10b981; font-size:20px;">2,000</span></div>
+        <div>❤️ SANITY<br><span id="v-sanity" style="color:#f43f5e; font-size:20px;">100%</span></div>
+    </div>
+
+    <!-- THE TARGET TASK CARD -->
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
+            <span id="v-cat" style="font-weight:bold; color:#f87171;">CRITICAL</span>
+            <span id="v-pts">+400 POINTS</span>
+        </div>
+        <h3 id="v-title" style="margin:10px 0;">Task Engine Inactive</h3>
+        <p id="v-desc" style="color:#94a3b8; font-size:13px; margin:0;">Click the blue 'Initialize Engine' button above to generate your first live deck item.</p>
+        
+        <div class="progress-container">
+            <div id="v-fuse" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- MAIN GAME WORK CONTROL DECK -->
+    <div class="panel" style="background:#131b2e;">
+        <span style="font-size:11px; font-weight:bold; color:#64748b;">2. INTERACTION DECISIONS</span>
+        <div class="action-grid">
+            <button onclick="processClick('now')" class="btn btn-green">⚡ Do Now (-5s)</button>
+            <button onclick="processClick('schedule')" class="btn btn-blue">📅 Schedule Task</button>
+            <button onclick="processClick('delegate')" class="btn btn-amber">🤝 Delegate (-150pts)</button>
+            <button onclick="processClick('ignore')" class="btn btn-red">📱 Check Feed</button>
+        </div>
+    </div>
+
+    <!-- THE SYSTEM TRACER LOG -->
+    <div class="panel">
+        <span style="font-size:11px; font-weight:bold; color:#94a3b8; display:block; margin-bottom:5px;">📊 BACKEND SYSTEM LOG TRACER</span>
+        <div id="system-log">System idling... ready for initialization.</div>
+    </div>
+
+    <script>
+        let state = {
+            active: false, name: "", score: 2000, sanity: 100, time: 300, fuse: 100,
+            tasksManaged: 0, crisesFaced: 0, trapsHit: 0,
+            clockLoop: null, taskLoop: null, currentTask: null
+        };
+
+        const tasks = [
+            { title: "Upload Final Essay Draft", desc: "The submission link shuts down automatically in seconds.", cat: "Urgent", pts: 400 },
+            { title: "Fix Broken Presentation Slides", desc: "Your project team left the template completely empty.", cat: "Urgent", pts: 300 },
+            { title: "Study Weekly Lecture Summary", desc: "Review core terms before things pile up closer to finals.", cat: "Important", pts: 200 },
+            { title: "Clear Out Email Inbox", desc: "Sort secondary workshop messages and notification chains.", cat: "Routine", pts: 100 }
+        ];
+
+        function printLog(msg) {
+            const consoleBox = document.getElementById("system-log");
+            consoleBox.innerHTML += "<br>> " + msg;
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function bootEngine() {
+            if(state.active) return;
+            
+            state.name = document.getElementById("username").value.trim();
+            state.active = true;
+            document.getElementById("boot-btn").disabled = true;
+            document.getElementById("boot-btn").style.backgroundColor = "#334155";
+            document.getElementById("boot-btn").innerText = "Engine Running";
+            
+            printLog("Engine validated for user: " + state.name);
+            generateTask();
+
+            // Run Global 5-Minute Timer Loop
+            state.clockLoop = setInterval(function() {
+                state.time--;
+                
+                let m = Math.floor(state.time / 60);
+                let s = state.time % 60;
+                document.getElementById("v-timer").innerText = m.toString().padStart(2,'0') + ":" + s.toString().padStart(2,'0');
+                
+                if(state.time <= 0) {
+                    shutDownEngine("TIME EXPIRED");
+                }
+            }, 1000);
+            printLog("Global countdown loop engaged successfully.");
+        }
+
+        function generateTask() {
+            clearInterval(state.taskLoop);
+            if(!state.active) return;
+
+            state.currentTask = tasks[Math.floor(Math.random() * tasks.length)];
+            
+            document.getElementById("v-title").innerText = state.currentTask.title;
+            document.getElementById("v-desc").innerText = state.currentTask.desc;
+            document.getElementById("v-cat").innerText = state.currentTask.cat.toUpperCase();
+            document.getElementById("v-pts").innerText = "+" + state.currentTask.pts + " POINTS";
+            
+            state.fuse = 100;
+            printLog("New deck item populated: " + state.currentTask.title);
+
+            // Active Countdown Bar
+            state.taskLoop = setInterval(function() {
+                state.fuse -= 2;
+                document.getElementById("v-fuse").style.width = state.fuse + "%";
+                
+                if(state.fuse <= 0) {
+                    state.sanity = Math.max(0, state.sanity - 20);
+                    state.score = Math.max(0, state.score - 200);
+                    state.crisesFaced++;
+                    printLog("WARNING: Task expired! Penalty applied to metrics.");
+                    refreshCounters();
+                    generateTask();
+                }
+            }, 100); 
+        }
+
+        function processClick(type) {
+            if(!state.active) {
+                alert("Please click the 'Initialize Engine' button first!");
+                return;
+            }
+
+            printLog("Action register: Processing '" + type + "' input strategy.");
+
+            if(type === 'now') {
+                state.score += state.currentTask.pts;
+                state.time = Math.max(0, state.time - 5);
+            } else if(type === 'schedule') {
+                state.score += Math.floor(state.currentTask.pts * 0.8);
+                state.tasksManaged++;
+            } else if(type === 'delegate') {
+                state.score = Math.max(0, state.score - 150);
+            } else if(type === 'ignore') {
+                state.score += 100;
+                state.sanity = Math.max(0, state.sanity - 15);
+                state.trapsHit++;
+            }
+
+            refreshCounters();
+            generateTask();
+        }
+
+        function refreshCounters() {
+            document.getElementById("v-score").innerText = state.score.toLocaleString();
+            document.getElementById("v-sanity").innerText = state.sanity + "%";
+            
+            if(state.sanity <= 0) {
+                shutDownEngine("SANITY COLLAPSE");
+            }
+        }
+
+        function shutDownEngine(reason) {
+            clearInterval(state.clockLoop);
+            clearInterval(state.taskLoop);
+            state.active = false;
+            
+            document.getElementById("v-title").innerText = "🏁 SIMULATION COMPLETE";
+            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Score: " + state.score.toLocaleString();
+            
+
