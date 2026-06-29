@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keep Talkin' and Nobody Explode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', system-ui;
+            background: linear-gradient(180deg, #111b11 0%, #0a120a 100%);
+        }
+        
+        .module-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .module-btn:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+        }
+        
+        .bomb-frame {
+            box-shadow: 0 0 60px rgba(234, 179, 8, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center">
+    <div class="max-w-4xl w-full px-6 py-12">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="inline-block bg-black border-4 border-yellow-400 px-8 py-4 rounded-xl mb-6 bomb-frame">
+                <div class="text-yellow-400 text-xs tracking-[4px]">KEEP TALKIN'</div>
+                <div class="text-5xl digital text-white">AND NOBODY EXPLODE</div>
+            </div>
+            <div class="text-emerald-400 text-sm tracking-widest">DEFUSE THE BOMB</div>
+        </div>
+        
+        <!-- Modules Grid (9 modules) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+            
+            <!-- Wires -->
+            <a href="wires.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴🔵🟡⚫</div>
+                    <div class="text-yellow-300 text-xl font-bold">WIRES</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">CUT THE RIGHT ONE</div>
+                </div>
+            </a>
+            
+            <!-- Button -->
+            <a href="the-button.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴</div>
+                    <div class="text-yellow-300 text-xl font-bold">THE BUTTON</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">HOLD & RELEASE</div>
+                </div>
+            </a>
+            
+            <!-- Keypads -->
+            <a href="keypads.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔢</div>
+                    <div class="text-yellow-300 text-xl font-bold">KEYPADS</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">ENTER THE CODE</div>
+                </div>
+            </a>
+            
+            <!-- Simon Says -->
+            <a href="simon-says.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴🟡🔵🟢</div>
+                    <div class="text-yellow-300 text-xl font-bold">SIMON SAYS</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">REPEAT THE SEQUENCE</div>
+                </div>
+            </a>
+            
+            <!-- Who's on First -->
+            <a href="whos-on-first.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">❓</div>
+                    <div class="text-yellow-300 text-xl font-bold">WHO'S ON FIRST</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">WORD PUZZLE</div>
+                </div>
+            </a>
+            
+            <!-- Memory -->
+            <a href="memory.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🧠</div>
+                    <div class="text-yellow-300 text-xl font-bold">MEMORY</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">STAGE RECALL</div>
+                </div>
+            </a>
+            
+            <!-- Morse Code -->
+            <a href="morse-code.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">···</div>
+                    <div class="text-yellow-300 text-xl font-bold">MORSE CODE</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">TRANSMIT THE CODE</div>
+                </div>
+            </a>
+            
+            <!-- Maze -->
+            <a href="maze.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🌀</div>
+                    <div class="text-yellow-300 text-xl font-bold">MAZE</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">NAVIGATE INVISIBLE PATH</div>
+                </div>
+            </a>
+            
+            <!-- Password -->
+            <a href="password.html" target="_blank" class="module-btn group">
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔑</div>
+                    <div class="text-yellow-300 text-xl font-bold">PASSWORD</div>
+                    <div class="text-yellow-400/70 text-xs mt-1">ENTER THE CODE</div>
+                </div>
+            </a>
+            
+        </div>
+        
+        <div class="text-center mt-12 text-emerald-400 text-xs tracking-widest">
+            DEFUSE ALL MODULES BEFORE THE TIMER RUNS OUT
+        </div>
+    </div>
+    
+    <script>
+        // Tailwind script already loaded
+    </script>
+</body>
+</html>
