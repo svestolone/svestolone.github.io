@@ -2,251 +2,140 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Semester Survival - Animation Engine</title>
+    <title>Semester Survival Sprint</title>
     <style>
-        body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            font-family: sans-serif;
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            user-select: none;
-        }
-        .panel {
-            background-color: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .btn {
-            padding: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-size: 14px;
-        }
-        .btn-indigo { background-color: #4f46e5; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; user-select: none; }
+        .panel { background-color: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 15px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn { padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; color: white; font-size: 14px; }
+        #boot-btn { background-color: #4f46e5; width: 100%; font-size: 16px; }
         .btn-green { background-color: #16a34a; }
         .btn-blue { background-color: #2563eb; }
         .btn-amber { background-color: #d97406; }
         .btn-red { background-color: #dc2626; }
-        
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .progress-container {
-            background-color: #0f172a;
-            height: 10px;
-            border-radius: 5px;
-            margin: 15px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            background-color: #f59e0b;
-            height: 100%;
-            width: 100%;
-        }
-        #system-log {
-            background-color: #000;
-            color: #22c55e;
-            font-family: monospace;
-            padding: 10px;
-            border-radius: 6px;
-            height: 100px;
-            overflow-y: auto;
-            font-size: 12px;
-        }
+        .bar-bg { background-color: #0f172a; height: 10px; border-radius: 5px; margin: 15px 0; overflow: hidden; }
+        .bar-fill { background-color: #f59e0b; height: 100%; width: 100%; }
+        #system-log { background-color: #000; color: #22c55e; font-family: monospace; padding: 10px; border-radius: 6px; height: 60px; overflow-y: auto; font-size: 11px; text-align: left; }
     </style>
 </head>
 <body>
 
-    <h2 style="color:#818cf8; margin-bottom:5px;">🎓 Semester Survival Race</h2>
-    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Zero-Timer Animation Loop Build</p>
+    <h2 style="color:#818cf8; text-align: center; margin-bottom: 20px;">🎓 Semester Survival Race</h2>
 
-    <!-- PLAYER INITIALIZATION PANEL -->
     <div class="panel">
-        <label for="username" style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">1. SET PROFILE & INITIALIZE</label>
-        <input id="username" type="text" value="Player1" style="padding:10px; border-radius:4px; border:1px solid #475569; background:#0f172a; color:white; width:150px;">
-        <button id="boot-btn" type="button" class="btn btn-indigo" style="padding:10px 20px;">Initialize Engine</button>
+        <button id="boot-btn" class="btn">Initialize Engine</button>
     </div>
 
-    <!-- LIVE LEADERBOARD / METRICS PANEL -->
-    <div class="panel grid-3">
-        <div>⏱️ TIMER<br><span id="v-timer" style="color:#f59e0b; font-size:20px;">05:00</span></div>
-        <div>🏆 SCORE<br><span id="v-score" style="color:#10b981; font-size:20px;">2,000</span></div>
-        <div>❤️ SANITY<br><span id="v-sanity" style="color:#f43f5e; font-size:20px;">100%</span></div>
+    <div class="panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-weight: bold;">
+        <div>⏱️ TIMER: <span id="v-timer" style="color:#f59e0b;">05:00</span></div>
+        <div>🏆 SCORE: <span id="v-score" style="color:#10b981;">2,000</span></div>
     </div>
 
-    <!-- THE TARGET TASK CARD -->
     <div class="panel">
-        <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
-            <span id="v-cat" style="font-weight:bold; color:#f87171;">CRITICAL</span>
-            <span id="v-pts">+400 POINTS</span>
-        </div>
-        <h3 id="v-title" style="margin:10px 0;">Task Engine Inactive</h3>
-        <p id="v-desc" style="color:#94a3b8; font-size:13px; margin:0;">Click Initialize Engine to unlock your workflow.</p>
-        
-        <div class="progress-container">
-            <div id="v-fuse" class="progress-bar"></div>
-        </div>
+        <h3 id="v-title">Engine Inactive</h3>
+        <p id="v-desc" style="color:#94a3b8; font-size:13px;">Click the main button above to load tasks.</p>
+        <div class="bar-bg"><div id="v-fuse" class="bar-fill"></div></div>
     </div>
 
-    <!-- MAIN GAME WORK CONTROL DECK -->
     <div class="panel" style="background:#131b2e;">
-        <span style="font-size:11px; font-weight:bold; color:#64748b;">2. INTERACTION DECISIONS</span>
-        <div class="action-grid">
-            <button id="btn-now" class="btn btn-green">⚡ Do Now (-5s)</button>
-            <button id="btn-schedule" class="btn btn-blue">📅 Schedule Task</button>
-            <button id="btn-delegate" class="btn btn-amber">🤝 Delegate (-150pts)</button>
-            <button id="btn-ignore" class="btn btn-red">📱 Check Feed</button>
+        <div class="grid">
+            <button id="btn-now" class="btn btn-green">⚡ Do Now</button>
+            <button id="btn-schedule" class="btn btn-blue">📅 Schedule</button>
+            <button id="btn-delegate" class="btn btn-amber">🤝 Delegate</button>
+            <button id="btn-ignore" class="btn btn-red">📱 TikTok</button>
         </div>
     </div>
 
-    <!-- THE SYSTEM TRACER LOG -->
     <div class="panel">
-        <span style="font-size:11px; font-weight:bold; color:#94a3b8; display:block; margin-bottom:5px;">📊 BACKEND SYSTEM LOG TRACER</span>
-        <div id="system-log">> Native frame engine ready.</div>
+        <div id="system-log">> Ready.</div>
     </div>
 
     <script>
-        var active = false;
-        var score = 2000;
-        var sanity = 100;
-        var timeRemaining = 300;
-        
-        var currentTask = null;
-        var taskDuration = 8000; // Total ms allowed for current task
-        var taskTimeElapsed = 0;
-        var lastFrameTime = 0;
-        var clockAccumulator = 0;
+        var gameActive = false;
+        var gameScore = 2000;
+        var gameTime = 300;
+        var currentFuse = 100;
+        var activeTask = null;
+        var gameLoop = null;
 
-        var tasks = [
-            { title: "Upload Final Essay Draft", desc: "The submission link shuts down automatically.", cat: "Urgent", pts: 400 },
-            { title: "Fix Broken Presentation Slides", desc: "Your project team left the template completely empty.", cat: "Urgent", pts: 300 },
-            { title: "Study Weekly Lecture Summary", desc: "Review core terms before finals week approach.", cat: "Important", pts: 200 },
-            { title: "Clear Out Email Inbox", desc: "Sort notification chains and registration logs.", cat: "Routine", pts: 100 }
+        var taskDeck = [
+            { t: "Upload Essay Draft", d: "The portal closes in moments.", p: 400 },
+            { t: "Fix Project Slides", d: "Your teammates left them completely blank.", p: 300 },
+            { t: "Review Lecture Notes", d: "Study before core materials pile up.", p: 200 }
         ];
 
-        function printLog(msg) {
-            var consoleBox = document.getElementById("system-log");
-            if (consoleBox) {
-                consoleBox.innerHTML += "<br>> " + msg;
-                consoleBox.scrollTop = consoleBox.scrollHeight;
-            }
+        function log(msg) {
+            var box = document.getElementById("system-log");
+            if (box) { box.innerHTML += "<br>> " + msg; box.scrollTop = box.scrollHeight; }
         }
 
-        function formatDisplayTime(seconds) {
-            var m = Math.floor(seconds / 60);
-            var s = seconds % 60;
-            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+        function setTask() {
+            if (!gameActive) return;
+            activeTask = taskDeck[Math.floor(Math.random() * taskDeck.length)];
+            document.getElementById("v-title").innerText = activeTask.t;
+            document.getElementById("v-desc").innerText = activeTask.d;
+            currentFuse = 100;
+            log("Loaded: " + activeTask.t);
         }
 
-        function generateTask() {
-            if (!active) return;
-            currentTask = tasks[Math.floor(Math.random() * tasks.length)];
-            taskTimeElapsed = 0;
+        function runTick() {
+            if (!gameActive) return;
             
-            document.getElementById("v-title").innerText = currentTask.title;
-            document.getElementById("v-desc").innerText = currentTask.desc;
-            document.getElementById("v-cat").innerText = currentTask.cat.toUpperCase();
-            document.getElementById("v-pts").innerText = "+" + currentTask.pts + " POINTS";
-            printLog("Dispatched workflow: " + currentTask.title);
-        }
-
-        // Native hardware frame loop replacing all standard background timers
-        function processGameFrame(timestamp) {
-            if (!active) return;
-            if (!lastFrameTime) lastFrameTime = timestamp;
+            // Time logic
+            gameTime--;
+            var m = Math.floor(gameTime / 60);
+            var s = gameTime % 60;
+            document.getElementById("v-timer").innerText = (m < 10 ? "0"+m : m) + ":" + (s < 10 ? "0"+s : s);
             
-            var delta = timestamp - lastFrameTime;
-            lastFrameTime = timestamp;
-
-            // Manage 5-Minute Game Timer (Calculated via frame deltas instead of setInterval)
-            clockAccumulator += delta;
-            if (clockAccumulator >= 1000) {
-                timeRemaining--;
-                clockAccumulator -= 1000;
-                document.getElementById("v-timer").innerText = formatDisplayTime(timeRemaining);
-                if (timeRemaining <= 0) {
-                    shutDownEngine("TIMELIMIT REACHED");
-                    return;
-                }
+            if (gameTime <= 0) {
+                gameActive = false;
+                clearInterval(gameLoop);
+                document.getElementById("v-title").innerText = "🏁 GAME OVER";
+                log("Time limit reached.");
+                return;
             }
 
-            // Manage Task Progress Fuse bar
-            taskTimeElapsed += delta;
-            var pctRemaining = Math.max(0, 100 - (taskTimeElapsed / taskDuration * 100));
-            document.getElementById("v-fuse").style.width = pctRemaining + "%";
-
-            if (taskTimeElapsed >= taskDuration) {
-                sanity = Math.max(0, sanity - 20);
-                score = Math.max(0, score - 200);
-                printLog("CRISIS: Item expired before interaction response!");
-                updateMetrics();
-                generateTask();
-            }
-
-            if (active) {
-                window.requestAnimationFrame(processGameFrame);
+            // Fuse logic
+            currentFuse -= 4;
+            document.getElementById("v-fuse").style.width = currentFuse + "%";
+            if (currentFuse <= 0) {
+                gameScore = Math.max(0, gameScore - 200);
+                document.getElementById("v-score").innerText = gameScore.toLocaleString();
+                log("CRISIS: Task expired!");
+                setTask();
             }
         }
 
-        function updateMetrics() {
-            document.getElementById("v-score").innerText = score.toLocaleString();
-            document.getElementById("v-sanity").innerText = sanity + "%";
-            if (sanity <= 0) shutDownEngine("SANITY BREAKDOWN");
+        function handlePress(action) {
+            if (!gameActive) return;
+            log("Selected strategy: " + action);
+            
+            if (action === 'now') { gameScore += activeTask.p; gameTime = Math.max(0, gameTime - 5); }
+            if (action === 'schedule') { gameScore += Math.floor(activeTask.p * 0.8); }
+            if (action === 'delegate') { gameScore = Math.max(0, gameScore - 150); }
+            if (action === 'ignore') { gameScore += 100; }
+
+            document.getElementById("v-score").innerText = gameScore.toLocaleString();
+            setTask();
         }
 
-        function handleDecision(type) {
-            if (!active) return;
-            printLog("Action: " + type);
-
-            if (type === 'now') {
-                score += currentTask.pts;
-                timeRemaining = Math.max(0, timeRemaining - 5);
-            } else if (type === 'schedule') {
-                score += Math.floor(currentTask.pts * 0.8);
-            } else if (type === 'delegate') {
-                score = Math.max(0, score - 150);
-            } else if (type === 'ignore') {
-                score += 100;
-                sanity = Math.max(0, sanity - 15);
-            }
-
-            updateMetrics();
-            generateTask();
-        }
-
-        function shutDownEngine(reason) {
-            active = false;
-            document.getElementById("v-title").innerText = "🏁 SIMULATION OVER";
-            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Leaderboard Score: " + score.toLocaleString();
-            printLog("Engine offline safely.");
-        }
-
-        // Clean event attachment completely separated from HTML elements
         window.onload = function() {
             document.getElementById("boot-btn").onclick = function() {
-                if (active) return;
-                active = true;
+                if (gameActive) return;
+                gameActive = true;
                 this.disabled = true;
                 this.style.backgroundColor = "#334155";
-                this.innerText = "Engine Engaged";
-                
-                printLog("Animation frame system engaged successfully.");
-                generateTask();
-                lastFrameTime = 0;
+                this.innerText = "Running...";
+                log("Engine started smoothly.");
+                setTask();
+                gameLoop = setInterval(runTick, 1000);
+            };
+
+            document.getElementById("btn-now").onclick = function() { handlePress('now'); };
+            document.getElementById("btn-schedule").onclick = function() { handlePress('schedule'); };
+            document.getElementById("btn-delegate").onclick = function() { handlePress('delegate'); };
+            document.getElementById("btn-ignore").onclick = function() { handlePress('ignore'); };
+        };
+    </script>
+</body>
+</html>
