@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Keep Talkin' and Nobody Explode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -10,9 +10,10 @@
         
         body {
             margin: 0;
-            overflow: hidden;
+            overflow-y: auto;
             font-family: 'Press Start 2P', system-ui;
             background: linear-gradient(180deg, #111b11 0%, #0a120a 100%);
+            min-height: 100vh;
         }
         
         .module-btn {
@@ -27,116 +28,106 @@
         .bomb-frame {
             box-shadow: 0 0 60px rgba(234, 179, 8, 0.3);
         }
-        
-        /* Mobile optimizations */
-        @media (max-width: 640px) {
-            .module-btn {
-                padding: 1.25rem;
-            }
-            .module-btn div.text-4xl {
-                font-size: 2.25rem;
-            }
-        }
     </style>
 </head>
-<body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center">
-    <div class="max-w-4xl w-full px-4 sm:px-6 py-8 sm:py-12">
+<body class="bg-zinc-950 text-white">
+    <div class="max-w-4xl w-full mx-auto px-4 py-8">
         <!-- Header -->
-        <div class="text-center mb-8 sm:mb-12">
-            <div class="inline-block bg-black border-4 border-yellow-400 px-6 sm:px-8 py-4 rounded-xl mb-6 bomb-frame">
+        <div class="text-center mb-8">
+            <div class="inline-block bg-black border-4 border-yellow-400 px-6 py-4 rounded-xl mb-6 bomb-frame">
                 <div class="text-yellow-400 text-xs tracking-[4px]">KEEP TALKIN'</div>
-                <div class="text-4xl sm:text-5xl digital text-white">AND NOBODY EXPLODE</div>
+                <div class="text-4xl digital text-white">AND NOBODY EXPLODE</div>
             </div>
-            <div class="text-emerald-400 text-xs sm:text-sm tracking-widest">DEFUSE THE BOMB</div>
+            <div class="text-emerald-400 text-xs tracking-widest">DEFUSE THE BOMB</div>
         </div>
         
-        <!-- Modules Grid (9 modules) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+        <!-- Modules Grid -->
+        <div class="grid grid-cols-2 gap-4 sm:gap-6 pb-8">
             
             <!-- Wires -->
             <a href="wires.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🔴🔵🟡⚫</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">WIRES</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴🔵🟡⚫</div>
+                    <div class="text-yellow-300 text-xl font-bold">WIRES</div>
                     <div class="text-yellow-400/70 text-xs mt-1">CUT THE RIGHT ONE</div>
                 </div>
             </a>
             
             <!-- Button -->
             <a href="the-button.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🔴</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">THE BUTTON</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴</div>
+                    <div class="text-yellow-300 text-xl font-bold">THE BUTTON</div>
                     <div class="text-yellow-400/70 text-xs mt-1">HOLD & RELEASE</div>
                 </div>
             </a>
             
             <!-- Keypads -->
             <a href="keypads.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🔢</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">KEYPADS</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔢</div>
+                    <div class="text-yellow-300 text-xl font-bold">KEYPADS</div>
                     <div class="text-yellow-400/70 text-xs mt-1">ENTER THE CODE</div>
                 </div>
             </a>
             
             <!-- Simon Says -->
             <a href="simon-says.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🔴🟡🔵🟢</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">SIMON SAYS</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔴🟡🔵🟢</div>
+                    <div class="text-yellow-300 text-xl font-bold">SIMON SAYS</div>
                     <div class="text-yellow-400/70 text-xs mt-1">REPEAT THE SEQUENCE</div>
                 </div>
             </a>
             
             <!-- Who's on First -->
             <a href="whos-on-first.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">❓</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">WHO'S ON FIRST</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">❓</div>
+                    <div class="text-yellow-300 text-xl font-bold">WHO'S ON FIRST</div>
                     <div class="text-yellow-400/70 text-xs mt-1">WORD PUZZLE</div>
                 </div>
             </a>
             
             <!-- Memory -->
             <a href="memory.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🧠</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">MEMORY</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🧠</div>
+                    <div class="text-yellow-300 text-xl font-bold">MEMORY</div>
                     <div class="text-yellow-400/70 text-xs mt-1">STAGE RECALL</div>
                 </div>
             </a>
             
             <!-- Morse Code -->
             <a href="morse-code.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">···</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">MORSE CODE</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">···</div>
+                    <div class="text-yellow-300 text-xl font-bold">MORSE CODE</div>
                     <div class="text-yellow-400/70 text-xs mt-1">TRANSMIT THE CODE</div>
                 </div>
             </a>
             
             <!-- Maze -->
             <a href="maze.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🌀</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">MAZE</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🌀</div>
+                    <div class="text-yellow-300 text-xl font-bold">MAZE</div>
                     <div class="text-yellow-400/70 text-xs mt-1">NAVIGATE INVISIBLE PATH</div>
                 </div>
             </a>
             
             <!-- Password -->
             <a href="password.html" target="_blank" class="module-btn group">
-                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-5 sm:p-6 text-center transition-all">
-                    <div class="text-4xl mb-3 sm:mb-4">🔑</div>
-                    <div class="text-yellow-300 text-lg sm:text-xl font-bold">PASSWORD</div>
+                <div class="bg-zinc-900 border-2 border-yellow-400 hover:border-yellow-300 rounded-2xl p-6 text-center transition-all">
+                    <div class="text-4xl mb-4">🔑</div>
+                    <div class="text-yellow-300 text-xl font-bold">PASSWORD</div>
                     <div class="text-yellow-400/70 text-xs mt-1">ENTER THE CODE</div>
                 </div>
             </a>
             
         </div>
         
-        <div class="text-center mt-10 sm:mt-12 text-emerald-400 text-xs tracking-widest">
+        <div class="text-center mt-10 text-emerald-400 text-xs tracking-widest">
             DEFUSE ALL MODULES BEFORE THE TIMER RUNS OUT
         </div>
     </div>
