@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Semester Survival - Single Screen Engine</title>
+    <title>Semester Survival - Robust Engine</title>
     <style>
         body {
             background-color: #0f172a;
@@ -73,7 +73,7 @@
 <body>
 
     <h2 style="color:#818cf8; margin-bottom:5px;">🎓 Semester Survival Race</h2>
-    <p style="color:#94a3b8; margin-top:0; font-size:13px;">If engine freezes, check the green System Log box below.</p>
+    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Fully patched engine version.</p>
 
     <!-- PLAYER INITIALIZATION PANEL -->
     <div class="panel">
@@ -122,7 +122,7 @@
 
     <script>
         let state = {
-            active: false, name: "", score: 2000, sanity: 100, time: 300, fuse: 100,
+            active: false, name: "Player1", score: 2000, sanity: 100, time: 300, fuse: 100,
             tasksManaged: 0, crisesFaced: 0, trapsHit: 0,
             clockLoop: null, taskLoop: null, currentTask: null
         };
@@ -136,29 +136,41 @@
 
         function printLog(msg) {
             const consoleBox = document.getElementById("system-log");
-            consoleBox.innerHTML += "<br>> " + msg;
-            consoleBox.scrollTop = consoleBox.scrollHeight;
+            if (consoleBox) {
+                consoleBox.innerHTML += "<br>> " + msg;
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            }
         }
 
         function bootEngine() {
             if(state.active) return;
             
-            state.name = document.getElementById("username").value.trim();
+            const nameInput = document.getElementById("username");
+            if (nameInput) {
+                state.name = nameInput.value.trim() || "Player1";
+            }
+            
             state.active = true;
-            document.getElementById("boot-btn").disabled = true;
-            document.getElementById("boot-btn").style.backgroundColor = "#334155";
-            document.getElementById("boot-btn").innerText = "Engine Running";
+            
+            const bootBtn = document.getElementById("boot-btn");
+            if (bootBtn) {
+                bootBtn.disabled = true;
+                bootBtn.style.backgroundColor = "#334155";
+                bootBtn.innerText = "Engine Running";
+            }
             
             printLog("Engine validated for user: " + state.name);
             generateTask();
 
-            // Run Global 5-Minute Timer Loop
             state.clockLoop = setInterval(function() {
                 state.time--;
                 
                 let m = Math.floor(state.time / 60);
                 let s = state.time % 60;
-                document.getElementById("v-timer").innerText = m.toString().padStart(2,'0') + ":" + s.toString().padStart(2,'0');
+                const timerEl = document.getElementById("v-timer");
+                if (timerEl) {
+                    timerEl.innerText = m.toString().padStart(2,'0') + ":" + s.toString().padStart(2,'0');
+                }
                 
                 if(state.time <= 0) {
                     shutDownEngine("TIME EXPIRED");
@@ -181,10 +193,12 @@
             state.fuse = 100;
             printLog("New deck item populated: " + state.currentTask.title);
 
-            // Active Countdown Bar
             state.taskLoop = setInterval(function() {
                 state.fuse -= 2;
-                document.getElementById("v-fuse").style.width = state.fuse + "%";
+                const fuseEl = document.getElementById("v-fuse");
+                if (fuseEl) {
+                    fuseEl.style.width = state.fuse + "%";
+                }
                 
                 if(state.fuse <= 0) {
                     state.sanity = Math.max(0, state.sanity - 20);
@@ -234,10 +248,4 @@
 
         function shutDownEngine(reason) {
             clearInterval(state.clockLoop);
-            clearInterval(state.taskLoop);
-            state.active = false;
-            
-            document.getElementById("v-title").innerText = "🏁 SIMULATION COMPLETE";
-            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Score: " + state.score.toLocaleString();
-            
 
