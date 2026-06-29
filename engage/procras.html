@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Semester Survival - Robust Engine</title>
+    <title>Semester Survival - Standard Compliance Engine</title>
     <style>
         body {
             background-color: #0f172a;
@@ -35,6 +35,7 @@
             color: white;
             font-size: 14px;
         }
+        .btn-indigo { background-color: #4f46e5; }
         .btn-green { background-color: #16a34a; }
         .btn-blue { background-color: #2563eb; }
         .btn-amber { background-color: #d97406; }
@@ -73,13 +74,13 @@
 <body>
 
     <h2 style="color:#818cf8; margin-bottom:5px;">🎓 Semester Survival Race</h2>
-    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Fully patched engine version.</p>
+    <p style="color:#94a3b8; margin-top:0; font-size:13px;">Security Compliance Patched Layout.</p>
 
     <!-- PLAYER INITIALIZATION PANEL -->
     <div class="panel">
         <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">1. SET PROFILE & INITIALIZE</label>
         <input id="username" type="text" value="Player1" style="padding:10px; border-radius:4px; border:1px solid #475569; background:#0f172a; color:white; width:150px;">
-        <button onclick="bootEngine()" id="boot-btn" style="padding:10px 20px; font-weight:bold; background-color:#4f46e5; color:white; border:none; border-radius:4px; cursor:pointer;">Initialize Engine</button>
+        <button id="boot-btn" class="btn btn-indigo" style="padding:10px 20px;">Initialize Engine</button>
     </div>
 
     <!-- LIVE LEADERBOARD / METRICS PANEL -->
@@ -107,10 +108,10 @@
     <div class="panel" style="background:#131b2e;">
         <span style="font-size:11px; font-weight:bold; color:#64748b;">2. INTERACTION DECISIONS</span>
         <div class="action-grid">
-            <button onclick="processClick('now')" class="btn btn-green">⚡ Do Now (-5s)</button>
-            <button onclick="processClick('schedule')" class="btn btn-blue">📅 Schedule Task</button>
-            <button onclick="processClick('delegate')" class="btn btn-amber">🤝 Delegate (-150pts)</button>
-            <button onclick="processClick('ignore')" class="btn btn-red">📱 Check Feed</button>
+            <button id="btn-now" class="btn btn-green">⚡ Do Now (-5s)</button>
+            <button id="btn-schedule" class="btn btn-blue">📅 Schedule Task</button>
+            <button id="btn-delegate" class="btn btn-amber">🤝 Delegate (-150pts)</button>
+            <button id="btn-ignore" class="btn btn-red">📱 Check Feed</button>
         </div>
     </div>
 
@@ -121,116 +122,97 @@
     </div>
 
     <script>
-        let state = {
-            active: false, name: "Player1", score: 2000, sanity: 100, time: 300, fuse: 100,
-            tasksManaged: 0, crisesFaced: 0, trapsHit: 0,
-            clockLoop: null, taskLoop: null, currentTask: null
-        };
+        // Use basic variable declarations for maximal runtime environment support
+        var active = false;
+        var score = 2000;
+        var sanity = 100;
+        var timeRemaining = 300;
+        var fuseValue = 100;
+        
+        var trapsHit = 0;
+        var crisesFaced = 0;
+        var tasksManaged = 0;
+        
+        var clockLoop = null;
+        var taskLoop = null;
+        var currentTask = null;
 
-        const tasks = [
-            { title: "Upload Final Essay Draft", desc: "The submission link shuts down automatically in seconds.", cat: "Urgent", pts: 400 },
+        var tasks = [
+            { title: "Upload Final Essay Draft", desc: "The submission link shuts down automatically.", cat: "Urgent", pts: 400 },
             { title: "Fix Broken Presentation Slides", desc: "Your project team left the template completely empty.", cat: "Urgent", pts: 300 },
-            { title: "Study Weekly Lecture Summary", desc: "Review core terms before things pile up closer to finals.", cat: "Important", pts: 200 },
-            { title: "Clear Out Email Inbox", desc: "Sort secondary workshop messages and notification chains.", cat: "Routine", pts: 100 }
+            { title: "Study Weekly Lecture Summary", desc: "Review core terms before finals week approach.", cat: "Important", pts: 200 },
+            { title: "Clear Out Email Inbox", desc: "Sort notification chains and registration logs.", cat: "Routine", pts: 100 }
         ];
 
         function printLog(msg) {
-            const consoleBox = document.getElementById("system-log");
+            var consoleBox = document.getElementById("system-log");
             if (consoleBox) {
                 consoleBox.innerHTML += "<br>> " + msg;
                 consoleBox.scrollTop = consoleBox.scrollHeight;
             }
         }
 
-        function bootEngine() {
-            if(state.active) return;
-            
-            const nameInput = document.getElementById("username");
-            if (nameInput) {
-                state.name = nameInput.value.trim() || "Player1";
-            }
-            
-            state.active = true;
-            
-            const bootBtn = document.getElementById("boot-btn");
-            if (bootBtn) {
-                bootBtn.disabled = true;
-                bootBtn.style.backgroundColor = "#334155";
-                bootBtn.innerText = "Engine Running";
-            }
-            
-            printLog("Engine validated for user: " + state.name);
-            generateTask();
-
-            state.clockLoop = setInterval(function() {
-                state.time--;
-                
-                let m = Math.floor(state.time / 60);
-                let s = state.time % 60;
-                const timerEl = document.getElementById("v-timer");
-                if (timerEl) {
-                    timerEl.innerText = m.toString().padStart(2,'0') + ":" + s.toString().padStart(2,'0');
-                }
-                
-                if(state.time <= 0) {
-                    shutDownEngine("TIME EXPIRED");
-                }
-            }, 1000);
-            printLog("Global countdown loop engaged successfully.");
+        function formatDisplayTime(seconds) {
+            var m = Math.floor(seconds / 60);
+            var s = seconds % 60;
+            var mStr = m < 10 ? "0" + m : m;
+            var sStr = s < 10 ? "0" + s : s;
+            return mStr + ":" + sStr;
         }
 
         function generateTask() {
-            clearInterval(state.taskLoop);
-            if(!state.active) return;
+            clearInterval(taskLoop);
+            if (!active) return;
 
-            state.currentTask = tasks[Math.floor(Math.random() * tasks.length)];
+            var randomIndex = Math.floor(Math.random() * tasks.length);
+            currentTask = tasks[randomIndex];
             
-            document.getElementById("v-title").innerText = state.currentTask.title;
-            document.getElementById("v-desc").innerText = state.currentTask.desc;
-            document.getElementById("v-cat").innerText = state.currentTask.cat.toUpperCase();
-            document.getElementById("v-pts").innerText = "+" + state.currentTask.pts + " POINTS";
+            document.getElementById("v-title").innerText = currentTask.title;
+            document.getElementById("v-desc").innerText = currentTask.desc;
+            document.getElementById("v-cat").innerText = currentTask.cat.toUpperCase();
+            document.getElementById("v-pts").innerText = "+" + currentTask.pts + " POINTS";
             
-            state.fuse = 100;
-            printLog("New deck item populated: " + state.currentTask.title);
+            fuseValue = 100;
+            printLog("New item generated: " + currentTask.title);
 
-            state.taskLoop = setInterval(function() {
-                state.fuse -= 2;
-                const fuseEl = document.getElementById("v-fuse");
+            taskLoop = setInterval(function() {
+                fuseValue -= 2;
+                var fuseEl = document.getElementById("v-fuse");
                 if (fuseEl) {
-                    fuseEl.style.width = state.fuse + "%";
+                    fuseEl.style.width = fuseValue + "%";
                 }
                 
-                if(state.fuse <= 0) {
-                    state.sanity = Math.max(0, state.sanity - 20);
-                    state.score = Math.max(0, state.score - 200);
-                    state.crisesFaced++;
-                    printLog("WARNING: Task expired! Penalty applied to metrics.");
+                if (fuseValue <= 0) {
+                    sanity = Math.max(0, sanity - 20);
+                    score = Math.max(0, score - 200);
+                    crisesFaced++;
+                    printLog("WARNING: Task fuse hit 0. Penalty registered.");
                     refreshCounters();
                     generateTask();
                 }
             }, 100); 
         }
 
-        function processClick(type) {
-            if(!state.active) {
-                alert("Please click the 'Initialize Engine' button first!");
+        function processDecision(type) {
+            if (!active) {
+                alert("Please initialize the system first.");
                 return;
             }
 
-            printLog("Action register: Processing '" + type + "' input strategy.");
+            printLog("Register action sequence: " + type);
 
-            if(type === 'now') {
-                state.score += state.currentTask.pts;
-                state.time = Math.max(0, state.time - 5);
-            } else if(type === 'schedule') {
-                state.score += Math.floor(state.currentTask.pts * 0.8);
-                state.tasksManaged++;
-            } else if(type === 'delegate') {
-                state.score = Math.max(0, state.score - 150);
-            } else if(type === 'ignore') {
-                state.score += 100;
-                state.sanity = Math.max(0, state.sanity - 15);
-                state.trapsHit++;
+            if (type === 'now') {
+                score += currentTask.pts;
+                timeRemaining = Math.max(0, timeRemaining - 5);
+            } else if (type === 'schedule') {
+                score += Math.floor(currentTask.pts * 0.8);
+                tasksManaged++;
+            } else if (type === 'delegate') {
+                score = Math.max(0, score - 150);
+            } else if (type === 'ignore') {
+                score += 100;
+                sanity = Math.max(0, sanity - 15);
+                trapsHit++;
             }
 
             refreshCounters();
@@ -238,14 +220,40 @@
         }
 
         function refreshCounters() {
-            document.getElementById("v-score").innerText = state.score.toLocaleString();
-            document.getElementById("v-sanity").innerText = state.sanity + "%";
+            document.getElementById("v-score").innerText = score.toLocaleString();
+            document.getElementById("v-sanity").innerText = sanity + "%";
             
-            if(state.sanity <= 0) {
-                shutDownEngine("SANITY COLLAPSE");
+            if (sanity <= 0) {
+                shutDownEngine("SANITY BREAKDOWN");
             }
         }
 
         function shutDownEngine(reason) {
-            clearInterval(state.clockLoop);
+            clearInterval(clockLoop);
+            clearInterval(taskLoop);
+            active = false;
+            
+            document.getElementById("v-title").innerText = "🏁 SIMULATION OVER";
+            document.getElementById("v-desc").innerText = "Reason: " + reason + " | Final Leaderboard Score: " + score.toLocaleString();
+            
+            printLog("--- FINAL RUN METRICS ---");
+            printLog("Traps Run: " + trapsHit);
+            printLog("Crises Faced: " + crisesFaced);
+            printLog("Items Scheduled: " + tasksManaged);
+        }
+
+        // Direct standard system event listener mappings (Ditches inline html triggers entirely)
+        document.addEventListener("DOMContentLoaded", function() {
+            printLog("System security scan complete. Listening for events.");
+            
+            document.getElementById("boot-btn").addEventListener("click", function() {
+                if (active) return;
+                active = true;
+                this.disabled = true;
+                this.style.backgroundColor = "#334155";
+                this.innerText = "Engine Engaged";
+                
+                printLog("Engine activation validated.");
+                generateTask();
+
 
