@@ -387,7 +387,14 @@ export const AgentD = {
     },
 
     whack(hole) {
-        if (!canAct() || hole.dataset.whackable !== 'true') return;
+        if (!canAct()) return;
+
+        // Every click on Module 4 costs energy and delays passive regen — no
+        // achievement points are ever awarded from this module.
+        spendEnergy(5);
+        pauseEnergyRegen(5);
+
+        if (hole.dataset.whackable !== 'true') return; // missed click, mole already gone
 
         hole.classList.remove('mole-up');
         hole.dataset.whackable = 'false';
@@ -396,12 +403,10 @@ export const AgentD = {
 
         this.whackedTotal += 1;
         this.credits += 1;
-        pauseEnergyRegen(2);
 
         if (this.credits >= 5) {
             this.credits = 0;
             this.stars += 1;
-            spendEnergy(10);
         }
 
         this.scoreEl.textContent = `Whacked: ${this.credits} / 4  |  Stars: ${this.stars}`;
