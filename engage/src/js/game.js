@@ -143,7 +143,11 @@ function endGame() {
 
     const baseM1 = state.m1.totalTasks * 20;
     const baseM2 = state.m2.totalTasks * 10;
-    const baseM3 = (state.m3.sequencesCorrect + 1) * 10;
+    // M3 levels score 10, 20, 30... pts (level N = N*10). Potential assumes the
+    // player goes one level further than what they've actually cleared, e.g.
+    // 1 sequence correct -> potential = 10 (lvl1) + 20 (lvl2) = 5*(1+1)*(1+2).
+    const m3Levels = state.m3.sequencesCorrect + 1;
+    const baseM3 = 5 * m3Levels * (m3Levels + 1);
     const perfectTotal = baseM1 + baseM2 + baseM3;
     const actualPoints = state.points; // accumulated across M1/M2/M3 only — M4 stars cost energy, not points
     const overallPct = perfectTotal > 0 ? (actualPoints / perfectTotal) * 100 : 0;

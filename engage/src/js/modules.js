@@ -190,7 +190,7 @@ export const AgentB = {
 // Agent C — Module 3: Not Urgent & Important (Simon-says sequence)
 // ===========================================================================
 const SIMON_COLORS = ['red', 'yellow', 'green', 'blue'];
-const MAX_SEQUENCE_LENGTH = 5;
+const MAX_SEQUENCE_LENGTH = 8;
 
 export const AgentC = {
     els: {},
@@ -303,8 +303,8 @@ export const AgentC = {
         if (color === this.sequence[this.playerStep]) {
             this.playerStep += 1;
             if (this.playerStep === this.sequence.length) {
-                // Full sequence matched.
-                addPoints(10);
+                // Full sequence matched — points scale with sequence level (level N = N*10 pts).
+                addPoints(this.sequence.length * 10);
                 state.m3.sequencesCorrect += 1;
                 this.els.score.textContent = `Sequences Correct: ${state.m3.sequencesCorrect}`;
                 this.accepting = false;
