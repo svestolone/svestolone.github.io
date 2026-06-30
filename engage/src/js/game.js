@@ -155,10 +155,22 @@ function endGame() {
     else level = 'Level 4';
 
     els.finalBreakdown.innerHTML = `
+        <p class="font-semibold text-white mt-1">Module 1 — Urgent &amp; Important</p>
+        <p>Correct: ${state.m1.correct} / Total Tasks: ${state.m1.totalTasks}</p>
         <p>Base M1 Potential: ${baseM1}</p>
+
+        <p class="font-semibold text-white mt-2">Module 2 — Urgent &amp; Not Important</p>
+        <p>Delegated: ${state.m2.delegated} / Correct: ${state.m2.correct} / Total Tasks: ${state.m2.totalTasks}</p>
         <p>Base M2 Potential: ${baseM2}</p>
+
+        <p class="font-semibold text-white mt-2">Module 3 — Not Urgent &amp; Important</p>
+        <p>Sequences Correct: ${state.m3.sequencesCorrect}</p>
         <p>Base M3 Potential: ${baseM3}</p>
-        <p class="font-semibold text-white">Perfect Total Potential: ${perfectTotal}</p>
+
+        <p class="font-semibold text-white mt-2">Module 4 — Not Urgent &amp; Not Important</p>
+        <p>Moles Whacked: ${AgentD.whackedTotal} / Stars Earned: ${AgentD.stars}</p>
+
+        <p class="font-semibold text-white mt-3">Perfect Total Potential: ${perfectTotal}</p>
         <p class="font-semibold text-white">Actual Points Gathered: ${actualPoints}</p>
         <p class="text-lg font-bold text-emerald-400 mt-2">Overall Score: ${overallPct.toFixed(1)}%</p>
         <p class="text-xl font-bold text-amber-400">${level}</p>
