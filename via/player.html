@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172b35">
+  <title>VIA Quest — Player</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="player-page">
+  <header class="site-header">
+    <div class="brand-mark">VQ</div>
+    <div>
+      <p class="eyebrow">A cooperative strengths adventure</p>
+      <h1>VIA Quest</h1>
+    </div>
+    <a class="header-link" href="gm.html">GM</a>
+  </header>
+
+  <main class="app-shell">
+    <section id="step-category" class="screen">
+      <div class="step-label">STEP 1 OF 3</div>
+      <h2>Choose your strength</h2>
+      <p class="intro">Pick one strength you want to bring into the mission. Choose before you know what the challenge will be.</p>
+      <div id="category-grid" class="category-grid"></div>
+    </section>
+
+    <section id="step-strengths" class="screen hidden">
+      <button id="back-to-categories" class="back-button" type="button">← All categories</button>
+      <div class="step-label">STEP 1 OF 3</div>
+      <h2 id="strength-category-title">Choose a strength</h2>
+      <p class="intro">Choose one card. You can select a strength you recognise in yourself or one you want to practise.</p>
+      <div id="strength-list" class="strength-list"></div>
+    </section>
+
+    <section id="step-confirm" class="screen hidden">
+      <button id="change-strength" class="back-button" type="button">← Change strength</button>
+      <div class="step-label">STEP 1 OF 3</div>
+      <h2>Lock in your strength?</h2>
+      <p class="intro">Your choice will be locked before the mission is revealed.</p>
+      <div id="selected-strength-summary" class="selected-summary"></div>
+      <button id="lock-strength" class="primary-button" type="button">Lock in strength</button>
+    </section>
+
+    <section id="step-mission" class="screen hidden">
+      <div class="step-label">STEP 2 OF 3</div>
+      <h2>Choose a mission</h2>
+      <p class="intro">Choose one of the six mission numbers. The Game Master will read the mission aloud; its script is not shown here.</p>
+      <div id="mission-grid" class="mission-grid"></div>
+      <button id="random-mission" class="secondary-button" type="button">Choose a random mission</button>
+    </section>
+
+    <section id="step-card" class="screen hidden">
+      <div class="step-label">STEP 3 OF 3</div>
+      <h2>Your strength card</h2>
+      <p class="intro">Listen to the Game Master’s mission first. When your team is ready, tap your card to reveal your mission information.</p>
+      <div class="mission-chip" id="chosen-mission-label">MISSION 01</div>
+      <button id="flip-card" class="card-button" type="button" aria-label="Flip strength card to reveal mission information">
+        <div id="card-inner" class="card-inner">
+          <div class="card-face card-front">
+            <img id="strength-card-image" class="strength-card-image" alt="Selected VIA strength card">
+            <div id="card-front-fallback" class="card-fallback hidden">
+              <span class="fallback-category" id="fallback-category"></span>
+              <strong id="fallback-strength"></strong>
+              <span>VIA QUEST</span>
+              <small>Add the matching PNG to assets/cards/ to display your designed card.</small>
+            </div>
+            <span class="tap-hint">TAP TO REVEAL</span>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-back-top">MISSION INTEL</div>
+            <div id="clue-strength-name" class="clue-strength-name"></div>
+            <div id="clue-status" class="clue-status"></div>
+            <p id="clue-text" class="clue-text"></p>
+            <div class="card-back-footer">Share what you discover with your team.</div>
+          </div>
+        </div>
+      </button>
+      <p id="card-instruction" class="card-instruction">Your clue stays hidden until you tap the card.</p>
+      <button id="end-round" class="primary-button hidden" type="button">End round · Choose another strength</button>
+    </section>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </main>
+
+  <footer class="site-footer">VIA Quest · A prototype for cooperative play</footer>
+  <script src="player.js"></script>
+</body>
+</html>

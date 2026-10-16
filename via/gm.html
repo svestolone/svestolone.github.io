@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172b35">
+  <title>VIA Quest — Game Master</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="gm-page">
+  <header class="site-header">
+    <div class="brand-mark">VQ</div>
+    <div>
+      <p class="eyebrow">Facilitator view</p>
+      <h1>Game Master</h1>
+    </div>
+    <a class="header-link" href="player.html">Player view</a>
+  </header>
+  <main class="app-shell gm-shell">
+    <section class="screen">
+      <div class="step-label">MISSION CONTROL</div>
+      <h2>Select the mission number</h2>
+      <p class="intro">When the players select a mission on their phones, click the matching number here. Read the script aloud. Keep the GM notes to yourself.</p>
+      <div id="gm-mission-grid" class="mission-grid gm-mission-grid"></div>
+    </section>
+    <section id="gm-script-panel" class="gm-script-panel hidden" aria-live="polite">
+      <button id="gm-back" class="back-button" type="button">← Mission list</button>
+      <div id="gm-script-content"></div>
+    </section>
+  </main>
+  <footer class="site-footer">Keep this page open on the Game Master's device.</footer>
+  <script src="gm.js"></script>
+</body>
+</html>
