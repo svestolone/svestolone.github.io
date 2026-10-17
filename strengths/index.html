@@ -62,32 +62,59 @@ function renderScenario(){const s=scenarios[current];$('scenarioNumber').textCon
 function renderCategories(){$('categories').innerHTML=categories.map(c=>`<button class="catbtn ${c===activeCategory?'active':''}" data-cat="${c}">${c}</button>`).join('');$('categories').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{activeCategory=b.dataset.cat;renderCategories();renderStrengths();}));}
 function renderStrengths(){const q=$('search').value.trim().toLowerCase();const list=strengths.filter(s=>(activeCategory==='All'||s[1]===activeCategory)&&s[0].toLowerCase().includes(q));$('strengthGrid').innerHTML=list.length?list.map(s=>`<button class="strength ${activeStrength===s[0]?'active':''}" data-strength="${s[0]}"><span class="emoji">${s[2]}</span><span><strong>${s[0]}</strong><small>${s[1]}</small></span></button>`).join(''):'<div class="empty">No strengths match that search.</div>';$('strengthGrid').querySelectorAll('[data-strength]').forEach(b=>b.addEventListener('click',()=>{activeStrength=b.dataset.strength;renderStrengths();renderAnswer();}));}
 function renderAnswer(){const area=$('answerArea');if(!activeStrength){area.innerHTML='<div class="empty">👆 Tap a character strength above to see a practical approach and a sample line you could actually say.</div>';return;}const s=scenarios[current],st=strengths.find(x=>x[0]===activeStrength);const say=makeSay(s,activeStrength);area.innerHTML=`<article class="answer"><div class="answer-label">${st[2]} ${st[1]} strength</div><h3>${activeStrength}</h3><p>${responseStyles[activeStrength]} ${st[3]}</p><div class="say">“${say}”</div><div class="answer-actions"><button id="copyAnswer">Copy sample line</button><button id="tryAnother">Try another strength</button></div></article>`;$('copyAnswer').addEventListener('click',()=>copyText(say));$('tryAnother').addEventListener('click',()=>{activeStrength=null;renderStrengths();renderAnswer();});}
-function makeSay(s,strength){const lines={
-'Creativity':`Could we try a different way to handle this? ${s.say.replace(/^“|”$/g,'')}`,
-'Curiosity':`Can I check what happened from your perspective before we decide what to do?`,
-'Judgment':`Let’s separate what we know from what we’re assuming, then choose a fair next step.`,
-'Love of Learning':`What would help us understand this better and handle it more effectively next time?`,
-'Perspective':`This matters, but I’d like us to look at the bigger picture and work out a constructive next step.`,
-'Bravery':s.say.replace(/^“|”$/g,''),
-'Perseverance':`This is uncomfortable, but I’m willing to work through it one step at a time. What should we tackle first?`,
-'Honesty':s.say.replace(/^“|”$/g,''),
-'Zest':`Let’s address this directly and see what we can do to move things forward.`,
-'Love':`I care about our relationship, and I’d like us to talk about this honestly and respectfully.`,
-'Kindness':`I can see this is difficult. What would be genuinely helpful right now?`,
-'Social Intelligence':`I want to understand how this has felt for everyone. Can we each share what we need before we decide?`,
-'Teamwork':`How can we share responsibility for fixing this? Let’s agree on one next step each.`,
-'Fairness':s.say.replace(/^“|”$/g,''),
-'Leadership':`Let’s clarify the issue, identify our options and agree on the next step.`,
-'Forgiveness':`I’m open to moving forward, but I also want us to acknowledge what happened and how to avoid repeating it.`,
-'Humility':`I may not have the full picture. I’m willing to hear your view and consider what I could do differently.`,
-'Prudence':`Before we react, can we pause and think through the likely consequences of each option?`,
-'Self-Regulation':`I’m feeling frustrated, so I’m going to take a moment. I want to respond thoughtfully rather than react.`,
-'Appreciation of Beauty & Excellence':`I appreciate the effort that has gone into this. Let’s use what’s working and improve the part that needs attention.`,
-'Gratitude':`I appreciate what you’ve done, and I’d also like us to talk about this issue so we can make it work better.`,
-'Hope':`This isn’t ideal, but I think we can improve it. What is one realistic step we can take now?`,
-'Humor':`This situation is getting tense — can we take a breath and figure it out together?`,
-'Spirituality':`I want to respond in a way that reflects my values: with honesty, care and respect. Let's work out a constructive next step.`
-};return lines[strength]||s.say.replace(/^“|”$/g,'');}
+function makeSay(s,strength){
+  const base=(s.say||'').replace(/^“|”$/g,'');
+  const situation=s.title.toLowerCase();
+  const lines={
+  'Creativity':`For “${s.title},” I’d like to try a different angle: ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Curiosity':`Before I assume I know what’s going on with ${situation}, can I ask what happened from your point of view?`,
+  'Judgment':`Let’s pause on ${situation}, separate the facts from our assumptions, and choose a response that’s fair to everyone.`,
+  'Love of Learning':`This has shown me something I can learn from. What information or skill would help us handle ${situation} better next time?`,
+  'Perspective':`This matters, but it’s one moment in a much bigger picture. What response will still feel constructive a week from now, especially with ${situation}?`,
+  'Bravery':`I feel a bit uncomfortable saying this, but I don’t want to avoid ${situation}. ${base}`,
+  'Perseverance':`This may take more than one conversation, but I’m willing to work through ${situation}. Let’s agree on the first practical step and follow through.`,
+  'Honesty':`${base} I’d rather be clear about ${situation} now than let it turn into a bigger problem later.`,
+  'Zest':`Okay, let’s tackle ${situation} instead of letting it hang over us. What’s one useful thing we can do right now?`,
+  'Love':`You matter to me, and so does how we handle ${situation}. I want to be honest about it while still treating each other with care.`,
+  'Kindness':`I want to handle ${situation} with care rather than judgement. What would be genuinely helpful right now, and what can I realistically offer?`, 
+  'Social Intelligence':`I want to handle ${situation} without making anyone feel cornered. Could we talk about what each of us needs and find a way forward?`,
+  'Teamwork':`Rather than leaving ${situation} for one person to fix, can we divide the next steps fairly and check in on how it’s going?`,
+  'Fairness':`I’d like us to handle ${situation} using the same standard for everyone. Here’s what I observed: ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Leadership':`Let’s bring some clarity to ${situation}: here’s the issue, here are our options, and I suggest we start with this next step — ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Forgiveness':`I don’t want ${situation} to define our relationship, and I’m open to repairing things. We still need to acknowledge what happened and decide how to avoid repeating it.`,
+  'Humility':`I may be missing part of the picture around ${situation}. I’m ready to listen, and I’ll own my part if I’ve contributed to the problem.`,
+  'Prudence':`Before acting on ${situation}, let’s think through what could happen next. A calm, proportionate first step would be: ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Self-Regulation':`I’m getting worked up about ${situation}, so I’m going to take a breath before I answer. What I want to say calmly is: ${base}`,
+  'Appreciation of Beauty & Excellence':`Even in ${situation}, there’s something worth preserving or improving. I appreciate the effort involved; let’s keep what works and make this part better: ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Gratitude':`I appreciate what you’ve contributed, and I don’t want that to stop us addressing ${situation} honestly. ${base}`,
+  'Hope':`This isn’t how I wanted ${situation} to go, but it doesn’t have to end here. One realistic step we can take to improve it is: ${base.charAt(0).toLowerCase()+base.slice(1)}`,
+  'Humor':humorLines[current],
+  'Spirituality':`I want my response to ${situation} to reflect the values I want to live by — honesty, care and responsibility. ${base}`
+  };
+  return lines[strength]||base;
+}
+const humorLines=[
+`I’d love the project to get the credit it deserves — and I’d also like my name to make a brief cameo in the credits. Can I add the analysis and recommendations I contributed?`,
+`“Not quite at the level expected” is impressively mysterious — like a restaurant review that just says “food.” Could you give me one specific example so I know what to improve?`,
+`I’d help, but my Friday workload is already doing a convincing impression of a Jenga tower. I can’t take the whole task, but I can help you identify the first priority.`,
+`Can we try the radical meeting innovation of letting a sentence reach its natural ending? I’d love to hear Mei finish her point, then we can come back to your idea.`,
+`I found a small report gremlin before it grew into a report dragon. There’s an error in the version I sent; I’m correcting it and will send the updated copy by 2 pm.`,
+`We’ve had so many workflow updates that the process needs its own season finale. Can we clarify the two steps that changed most and test one simple version this week?`,
+`My brain has started writing a whole detective series called “They Left Me on Read.” Before it gets renewed for season two, can I check whether we’re okay or whether another time to talk would suit you better?`,
+`I think our chore chart has become a competitive sport, and neither of us has asked to enter the Olympics. Can we list the jobs and agree who owns each one?`,
+`I miss you, but my calendar is beginning to treat our plans as a fictional genre. Can we only book a time when we’re both reasonably sure we can make it?`,
+`I know the joke got a laugh, but I didn’t volunteer that insecurity for the dinner-table comedy special. Please don’t joke about it again.`,
+`This health claim has travelled through the family chat faster than a forwarded good-morning message. I found guidance that says something different — mind if I share the source?`,
+`I seem to have become the family’s unofficial appointment secretary, logistics department and snack procurement officer. I can’t coordinate everything alone; could you take Thursday’s appointment?`,
+`I know you’re trying to protect me; I promise I’m not making life decisions by spinning a wheel. I’ve thought this through, and I’m choosing what fits my circumstances.`,
+`I’ve booked myself for three places at once, which would be impressive if I were a wizard. I overcommitted, and I’m sorry. I can’t do everything, so let’s work out an alternative now.`,
+`I’m not trying to launch Queue Court: The Musical. I’ve been waiting here, and I think the line starts behind me. Let’s check with staff if we’re unsure.`,
+`You look like those bags have applied for permanent residency in your arms. Would it help if I carried one or found you a seat? No pressure if you’re all set.`,
+`This group chat is starting to look less like a conversation and more like a roast with unlimited refills. We can disagree with the comment without turning a person into the punchline.`,
+`I think the cashier’s change calculation has given me a tiny unexpected bonus episode. I was given too much change, so I’ve come back to return the extra.`,
+`Social media is a highlight reel; nobody posts 14 minutes of comparing insurance plans and wondering what’s for dinner. Their milestones don’t cancel mine — what matters to me this week?`,
+`I owe you an apology, not a PowerPoint explaining why I was stressed. I spoke unfairly, and you didn’t deserve it. I’m sorry; I’ll handle it differently next time.`
+];
 function copyText(text){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(showToast).catch(()=>fallbackCopy(text));}else fallbackCopy(text)}function fallbackCopy(text){const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');showToast()}catch(e){showToast('Select and copy the line')}t.remove()}function showToast(msg='Copied sample line'){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
 function move(delta){current=(current+delta+scenarios.length)%scenarios.length;renderScenario()}$('prevBtn').addEventListener('click',()=>move(-1));$('nextBtn').addEventListener('click',()=>move(1));$('randomBtn').addEventListener('click',()=>{current=Math.floor(Math.random()*scenarios.length);renderScenario();$('scenarioTitle').scrollIntoView({behavior:'smooth',block:'center'});});$('randomScenarioBtn').addEventListener('click',()=>{let n=current;while(scenarios.length>1&&n===current)n=Math.floor(Math.random()*scenarios.length);current=n;renderScenario();});$('search').addEventListener('input',renderStrengths);$('clearBtn').addEventListener('click',()=>{activeStrength=null;$('search').value='';activeCategory='All';renderCategories();renderStrengths();renderAnswer();});
 renderScenario();renderCategories();renderStrengths();
