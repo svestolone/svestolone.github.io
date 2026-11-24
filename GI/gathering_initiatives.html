@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gathering Initiatives — Meaningful Conversations, Together</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: {
+                            50: '#FDFBF7',
+                            100: '#FAF7F2',
+                            200: '#F3EDE2',
+                            300: '#E6DEC8',
+                        },
+                        forest: {
+                            600: '#3B7361',
+                            700: '#2D5A4C',
+                            800: '#214439',
+                            900: '#162F27',
+                        },
+                        terracotta: {
+                            500: '#E06D53',
+                            600: '#C9583F',
+                            100: '#FCECE8',
+                        },
+                        mustard: {
+                            400: '#F7C631',
+                            500: '#F2B705',
+                            100: '#FEF6DC',
+                        },
+                        charcoal: '#262928'
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 30px -5px rgba(45, 90, 76, 0.06)',
+                        'card': '0 4px 20px -2px rgba(38, 41, 40, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF7F2;
+            color: #262928;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-editorial {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+        /* Custom subtle scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAF7F2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D5CCB8;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2D5A4C;
+        }
+        .fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-mustard-500/30 selection:text-forest-900">
+
+    <!-- =====================================================================
+         TOP DEMO & DEVELOPER UTILITY BAR (For testing multi-user & expiry)
+         ===================================================================== -->
+    <div class="bg-forest-900 text-cream-100 text-xs py-2.5 px-4 border-b border-forest-800">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-mustard-500 text-forest-900">
+                    Interactive Sandbox
+                </span>
+                <span class="text-cream-200 hidden sm:inline">Test joining an 8-person circle, auto-emails & expiry logging:</span>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Quick Persona Switcher -->
+                <div class="flex items-center gap-1.5 bg-forest-800/90 px-2.5 py-1 rounded-lg border border-forest-700">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-mustard-400"></i>
+                    <label for="quickUserSwitch" class="text-cream-200 font-medium">Active Account:</label>
+                    <select id="quickUserSwitch" onchange="App.handleQuickSwitch(this.value)" class="bg-transparent text-white font-semibold focus:outline-none cursor-pointer pr-1">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Simulate Past Event Expiry -->
+                <button onclick="App.simulateTimeExpiry()" class="inline-flex items-center gap-1.5 bg-forest-800 hover:bg-forest-700 text-cream-100 px-2.5 py-1 rounded-lg border border-forest-600 transition cursor-pointer" title="Fast-forward the earliest gathering past its date to test auto-archiving">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-terracotta-500"></i>
+                    <span>Test Past Event Expiry</span>
+                </button>
+
+                <!-- Email Inbox Trigger -->
+                <button onclick="UI.toggleEmailDrawer(true)" class="inline-flex items-center gap-1.5 bg-terracotta-500 hover:bg-terracotta-600 text-white font-semibold px-3 py-1 rounded-lg transition shadow-sm cursor-pointer">
+                    <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+                    <span>Email Dispatch Log</span>
+                    <span id="emailBadgeCount" class="bg-white text-terracotta-600 text-[10px] font-bold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+
+                <!-- GitHub Guide Trigger -->
+                <button onclick="UI.toggleModal('githubModal', true)" class="inline-flex items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/20 text-cream-100 px-2.5 py-1 rounded-lg transition cursor-pointer">
+                    <i data-lucide="github" class="w-3.5 h-3.5"></i>
+                    <span class="hidden md:inline">GitHub Setup</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MAIN NAVIGATION HEADER
+         ===================================================================== -->
+    <header class="sticky top-0 z-30 bg-cream-100/95 backdrop-blur-md border-b border-cream-300/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <!-- Brand Logo -->
+            <a href="#" onclick="UI.switchTab('active'); return false;" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-2xl bg-forest-700 text-cream-50 flex items-center justify-center shadow-sm group-hover:bg-forest-800 transition">
+                    <i data-lucide="sun" class="w-5 h-5 text-mustard-400"></i>
+                </div>
+                <div>
+                    <span class="font-editorial text-xl sm:text-2xl font-bold text-forest-800 tracking-tight block leading-none">
+                        Gathering Initiatives
+                    </span>
+                    <span class="text-[11px] font-medium text-forest-600 tracking-wide uppercase">
+                        Community Circles • Singapore
+                    </span>
+                </div>
+            </a>
+
+            <!-- Navigation & Auth Actions -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button onclick="App.openCreateModal()" class="inline-flex items-center gap-2 bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-sm transition cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-mustard-400"></i>
+                    <span>Propose a Topic</span>
+                </button>
+
+                <!-- Auth State Container -->
+                <div id="headerAuthArea" class="flex items-center gap-2">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         HERO EDITORIAL BANNER
+         ===================================================================== -->
+    <section class="relative overflow-hidden bg-cream-200/60 border-b border-cream-300/70">
+        <!-- Decorative warm blobs -->
+        <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-mustard-500/15 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-terracotta-500/10 blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-cream-300 shadow-xs mb-5">
+                    <span class="w-2 h-2 rounded-full bg-terracotta-500"></span>
+                    <span class="text-xs font-semibold text-forest-800 tracking-wide">Intimate Circles of 8 • Open to Everyone</span>
+                </div>
+                <h1 class="font-editorial text-3xl sm:text-5xl font-bold text-forest-900 leading-[1.15] mb-4">
+                    Small tables, honest questions, and <span class="italic text-terracotta-500">real human connection.</span>
+                </h1>
+                <p class="text-base sm:text-lg text-charcoal/80 leading-relaxed mb-7 max-w-2xl">
+                    Start a conversation around a topic you care about, pick a cozy neighbourhood spot, and gather up to 8 curious minds. Once a circle reaches 8 participants, the table closes and everyone receives their session details automatically.
+                </p>
+
+                <!-- How it works quick pills -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                    <div class="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-cream-300/80 flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-mustard-100 text-forest-900 font-bold flex items-center justify-center shrink-0 text-xs">1</div>
+                        <div>
+                            <p class="font-semibold text-forest-900">1. Spark a Topic</p>
+                            <p class="text-xs text-charcoal/70 mt-0.5">Set a theme, date/time & local venue as organizer.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-cream-300/80 flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-terracotta-100 text-terracotta-600 font-bold flex items-center justify-center shrink-0 text-xs">2</div>
+                        <div>
+                            <p class="font-semibold text-forest-900">2. Register & Join</p>
+                            <p class="text-xs text-charcoal/70 mt-0.5">Link your name & email. Organizers get notified on every join.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/80 backdrop-blur-xs p-3.5 rounded-2xl border border-cream-300/80 flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-forest-700 text-white font-bold flex items-center justify-center shrink-0 text-xs">3</div>
+                        <div>
+                            <p class="font-semibold text-forest-900">3. Closes at 8 People</p>
+                            <p class="text-xs text-charcoal/70 mt-0.5">At 8/8, the circle locks and emails all 8 participants.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         MAIN CONTENT: PUBLIC GATHERINGS & PAST LOG
+         ===================================================================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        <!-- Filter & Tab Controls -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-cream-300">
+            <div class="flex items-center gap-2 bg-cream-200/80 p-1.5 rounded-2xl self-start">
+                <button id="tabActiveBtn" onclick="UI.switchTab('active')" class="px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer bg-white text-forest-900 shadow-xs">
+                    <i data-lucide="compass" class="w-4 h-4 text-forest-700"></i>
+                    <span>Upcoming Gatherings</span>
+                    <span id="activeCountBadge" class="px-2 py-0.5 text-xs rounded-full bg-forest-700 text-white">0</span>
+                </button>
+                <button id="tabPastBtn" onclick="UI.switchTab('past')" class="px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer text-charcoal/70 hover:text-forest-900">
+                    <i data-lucide="archive" class="w-4 h-4"></i>
+                    <span>Past Gatherings Log</span>
+                    <span id="pastCountBadge" class="px-2 py-0.5 text-xs rounded-full bg-cream-300 text-charcoal">0</span>
+                </button>
+            </div>
+
+            <!-- Search & Status Filter -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <div class="relative flex-1 sm:flex-initial">
+                    <i data-lucide="search" class="w-4 h-4 text-charcoal/40 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="searchInput" oninput="UI.renderGatherings()" placeholder="Search topics or venues..." class="w-full sm:w-64 pl-9 pr-4 py-2 bg-white border border-cream-300 rounded-xl text-sm focus:outline-none focus:border-forest-700 transition">
+                </div>
+                <select id="statusFilter" onchange="UI.renderGatherings()" class="bg-white border border-cream-300 rounded-xl px-3.5 py-2 text-sm font-medium text-charcoal focus:outline-none focus:border-forest-700 cursor-pointer">
+                    <option value="all">All Circles</option>
+                    <option value="open">Open Spots Only</option>
+                    <option value="closed">Closed (8/8 Full)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Active Gatherings View -->
+        <div id="activeGatheringsSection">
+            <div id="gatheringsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Gathering cards injected here -->
+            </div>
+        </div>
+
+        <!-- Past Gatherings Log View -->
+        <div id="pastGatheringsSection" class="hidden">
+            <div class="bg-cream-200/70 border border-cream-300 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                    <div class="p-2 rounded-xl bg-forest-700/10 text-forest-800 mt-0.5">
+                        <i data-lucide="history" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-forest-900 text-sm">Automatic Expiry & Community Archive</h3>
+                        <p class="text-xs text-charcoal/75 mt-0.5">Once a gathering's scheduled date and time has passed, it is automatically removed from the public active board and preserved here in the permanent log.</p>
+                    </div>
+                </div>
+                <span class="text-xs font-medium text-forest-700 bg-white px-3 py-1.5 rounded-lg border border-cream-300 shrink-0">
+                    Auto-checked continuously
+                </span>
+            </div>
+
+            <div id="pastGatheringsList" class="space-y-4">
+                <!-- Past gathering log rows injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         FOOTER
+         ===================================================================== -->
+    <footer class="bg-forest-900 text-cream-200 border-t border-forest-800 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-forest-800 flex items-center justify-center">
+                    <i data-lucide="sun" class="w-5 h-5 text-mustard-400"></i>
+                </div>
+                <div>
+                    <p class="font-editorial text-lg font-bold text-white">Gathering Initiatives</p>
+                    <p class="text-xs text-cream-300/80">Fostering well-being through small-group dialogue.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-xs text-cream-300">
+                <button onclick="UI.toggleModal('githubModal', true)" class="hover:text-white underline underline-offset-4 cursor-pointer">Deploy to GitHub Pages</button>
+                <span>•</span>
+                <button onclick="UI.toggleEmailDrawer(true)" class="hover:text-white underline underline-offset-4 cursor-pointer">Inspect Automated Email Logs</button>
+                <span>•</span>
+                <button onclick="App.resetDemoData()" class="hover:text-terracotta-400 underline underline-offset-4 cursor-pointer">Reset Sample Data</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         TOAST NOTIFICATION CONTAINER (Replaces alert())
+         ===================================================================== -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- =====================================================================
+         MODAL 1: REGISTER / LINK ACCOUNT MODAL
+         ===================================================================== -->
+    <div id="authModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
+        <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl fade-in relative">
+            <button onclick="UI.toggleModal('authModal', false)" class="absolute top-5 right-5 p-2 rounded-full text-charcoal/50 hover:text-charcoal hover:bg-cream-200 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="w-12 h-12 rounded-2xl bg-mustard-100 text-forest-900 flex items-center justify-center mb-4">
+                <i data-lucide="user-check" class="w-6 h-6 text-forest-700"></i>
+            </div>
+
+            <h2 class="font-editorial text-2xl font-bold text-forest-900 mb-1.5">Link Your Name & Email</h2>
+            <p class="text-sm text-charcoal/75 mb-6">
+                Register an account so your display name is linked to your email address for organizer alerts and 8-person circle confirmations.
+            </p>
+
+            <form onsubmit="App.handleRegister(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Full Name (Displayed Publicly)</label>
+                    <input type="text" id="regNameInput" required placeholder="e.g., Mei Lin Tan" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Email Address (For Notifications)</label>
+                    <input type="email" id="regEmailInput" required placeholder="e.g., meilin@example.sg" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                </div>
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm shadow-sm transition cursor-pointer mt-2">
+                    Register & Sign In
+                </button>
+            </form>
+
+            <!-- Existing Demo Accounts Quick Select -->
+            <div class="mt-6 pt-5 border-t border-cream-300">
+                <p class="text-xs font-semibold text-charcoal/60 mb-2.5">Or sign in instantly with an existing community member:</p>
+                <div id="authModalUserList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: CREATE A NEW GATHERING (ORGANIZER FLOW)
+         ===================================================================== -->
+    <div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
+        <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl fade-in relative max-h-[92vh] overflow-y-auto">
+            <button onclick="UI.toggleModal('createModal', false)" class="absolute top-5 right-5 p-2 rounded-full text-charcoal/50 hover:text-charcoal hover:bg-cream-200 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-700/10 text-forest-800 text-xs font-semibold mb-3">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>You will be Participant #1 (Organizer)</span>
+            </div>
+
+            <h2 class="font-editorial text-2xl font-bold text-forest-900 mb-1.5">Start a New Gathering</h2>
+            <p class="text-sm text-charcoal/75 mb-5">
+                Propose a meaningful question or theme. Up to 7 others can join your table before it closes at 8 participants.
+            </p>
+
+            <form onsubmit="App.handleCreateGathering(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Discussion Topic *</label>
+                    <input type="text" id="topicTitleInput" required maxlength="90" placeholder="e.g., What does 'enough' look like in modern career life?" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Conversation Prompt / Context *</label>
+                    <textarea id="topicDescInput" required rows="3" maxlength="280" placeholder="Share a couple of guiding questions or what inspired this topic..." class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Date & Time *</label>
+                        <input type="datetime-local" id="topicDateTimeInput" required class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-forest-800 mb-1.5">Venue / Location *</label>
+                        <input type="text" id="topicVenueInput" required placeholder="e.g., Plain Vanilla, Tiong Bahru" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    </div>
+                </div>
+
+                <div class="bg-cream-200/80 rounded-xl p-3.5 text-xs text-charcoal/80 flex items-center justify-between">
+                    <span>Organizer: <strong id="createOrganizerPreview" class="text-forest-900"></strong></span>
+                    <span class="font-semibold text-forest-700">Capacity: 1 / 8 filled</span>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="UI.toggleModal('createModal', false)" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal/70 hover:bg-cream-200 transition cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+                        Publish Gathering
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: GITHUB SETUP & DEPLOYMENT GUIDE MODAL
+         ===================================================================== -->
+    <div id="githubModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
+        <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl fade-in relative max-h-[90vh] overflow-y-auto">
+            <button onclick="UI.toggleModal('githubModal', false)" class="absolute top-5 right-5 p-2 rounded-full text-charcoal/50 hover:text-charcoal hover:bg-cream-200 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-11 h-11 rounded-2xl bg-forest-900 text-white flex items-center justify-center">
+                    <i data-lucide="github" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="font-editorial text-2xl font-bold text-forest-900">GitHub & Live Email Deployment Guide</h2>
+                    <p class="text-xs text-charcoal/70">Zero-build single-file architecture ready for GitHub Pages</p>
+                </div>
+            </div>
+
+            <div class="space-y-5 text-sm text-charcoal/85">
+                <div class="bg-white p-4 rounded-2xl border border-cream-300">
+                    <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-forest-700 text-white text-xs flex items-center justify-center">1</span>
+                        Host on GitHub Pages in 60 Seconds
+                    </h3>
+                    <ol class="list-decimal list-inside space-y-1 text-xs text-charcoal/80 ml-1">
+                        <li>Create a new public repository on GitHub named <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono text-forest-900">gathering-initiatives</code>.</li>
+                        <li>Save this application file as <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono text-forest-900">index.html</code> in the root of your repository.</li>
+                        <li>Go to <strong>Settings → Pages</strong>, select the <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono">main</code> branch, and click <strong>Save</strong>.</li>
+                    </ol>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-cream-300">
+                    <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-terracotta-500 text-white text-xs flex items-center justify-center">2</span>
+                        Connect Real Outbound Emails (EmailJS)
+                    </h3>
+                    <p class="text-xs text-charcoal/80 mb-2">
+                        This app includes a built-in <code class="font-mono text-forest-800">EmailService</code> module. To send real emails to organizers and all 8 participants without a backend server, sign up for a free <a href="https://www.emailjs.com/" target="_blank" class="text-terracotta-600 underline font-semibold">EmailJS</a> account and paste your keys into <code class="font-mono">EMAILJS_CONFIG</code> at the top of the script:
+                    </p>
+                    <pre class="bg-forest-900 text-cream-100 p-3 rounded-xl text-[11px] font-mono overflow-x-auto">const EMAILJS_CONFIG = {
+  enabled: true, // Set to true once keys are added
+  serviceId: 'service_your_id',
+  organizerTemplateId: 'template_member_joined',
+  groupFullTemplateId: 'template_circle_closed_8',
+  publicKey: 'your_emailjs_public_key'
+};</pre>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-cream-300">
+                    <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
+                        <span class="w-5 h-5 rounded-full bg-mustard-500 text-forest-900 text-xs flex items-center justify-center">3</span>
+                        Multi-User Cloud Database (Optional Upgrade)
+                    </h3>
+                    <p class="text-xs text-charcoal/80">
+                        Currently, gatherings persist in browser storage for instant standalone GitHub Pages usage. To share live registrations across different devices globally, connect Firebase Firestore or Supabase inside the <code class="font-mono text-forest-800">StorageAdapter</code> module.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button onclick="UI.toggleModal('githubModal', false)" class="px-5 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold cursor-pointer">
+                    Got It
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         SLIDE-OVER DRAWER: AUTOMATED EMAIL DISPATCH LOG / LIVE INBOX
+         ===================================================================== -->
+    <div id="emailDrawerBackdrop" onclick="UI.toggleEmailDrawer(false)" class="fixed inset-0 z-40 bg-forest-900/50 backdrop-blur-xs hidden transition-opacity"></div>
+    <aside id="emailDrawer" class="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-cream-50 border-l border-cream-300 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Drawer Header -->
+        <div class="p-6 bg-forest-900 text-white flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-terracotta-500 flex items-center justify-center">
+                    <i data-lucide="send" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="font-editorial text-xl font-bold">Automated Email Log</h2>
+                    <p class="text-xs text-cream-200">Live preview of organizer & 8-person circle dispatches</p>
+                </div>
+            </div>
+            <button onclick="UI.toggleEmailDrawer(false)" class="p-2 rounded-full hover:bg-forest-800 text-cream-200 hover:text-white transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Trigger Explanation Banner -->
+        <div class="px-6 py-3 bg-mustard-100 border-b border-mustard-400/40 text-xs text-forest-900 flex items-center justify-between">
+            <span><strong>2 Auto-Triggers:</strong> (1) Organizer alert on join • (2) All 8 members at capacity</span>
+            <button onclick="App.clearEmailLogs()" class="text-terracotta-600 hover:underline font-semibold cursor-pointer">Clear Log</button>
+        </div>
+
+        <!-- Email List -->
+        <div id="emailLogList" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- Emails injected via JS -->
+        </div>
+    </aside>
+
+    <!-- =====================================================================
+         APPLICATION ARCHITECTURE (MODULAR CLIENT-SIDE ENGINE)
+         ===================================================================== -->
+    <script>
+        /**
+         * =====================================================================
+         * MODULE 1: CONFIGURATION & EMAIL DISPATCH SERVICE (EmailJS Ready)
+         * =====================================================================
+         */
+        const EMAILJS_CONFIG = {
+            enabled: false, // Toggle to true & add keys when deploying with EmailJS
+            serviceId: 'YOUR_SERVICE_ID',
+            organizerTemplateId: 'YOUR_ORGANIZER_TEMPLATE_ID',
+            groupClosedTemplateId: 'YOUR_GROUP_CLOSED_TEMPLATE_ID',
+            publicKey: 'YOUR_PUBLIC_KEY'
+        };
+
+        const EmailService = {
+            /**
+             * Trigger 1: Sent to Organizer whenever a new participant joins (< 8)
+             */
+            async sendOrganizerJoinAlert(gathering, newParticipant) {
+                const subject = `[Gathering Initiatives] ${newParticipant.name} joined "${gathering.title}" (${gathering.participants.length}/8)`;
+                const body = `Hello ${gathering.organizer.name},\n\nGreat news! ${newParticipant.name} (${newParticipant.email}) has just put their name down for your upcoming gathering.\n\n• Topic: ${gathering.title}\n• Date & Time: ${Utils.formatDateTime(gathering.dateTime)}\n• Venue: ${gathering.venue}\n• Current Circle Size: ${gathering.participants.length} of 8 participants\n\nCurrent Roster:\n${gathering.participants.map((p, i) => `${i + 1}. ${p.name} (${p.email})`).join('\n')}\n\nOnce 8 participants join, the circle will automatically close and everyone will receive a final confirmation email.\n\nWarmly,\nGathering Initiatives`;
+
+                const emailRecord = {
+                    id: 'mail_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    type: 'ORGANIZER_JOIN_ALERT',
+                    badgeText: 'Organizer Notification',
+                    timestamp: new Date().toISOString(),
+                    to: [`${gathering.organizer.name} <${gathering.organizer.email}>`],
+                    subject,
+                    body,
+                    gatheringTitle: gathering.title
+                };
+
+                this._recordAndOptionalSend(emailRecord);
+                return emailRecord;
+            },
+
+            /**
+             * Trigger 2: Sent to ALL 8 Participants when the 8th person joins & closes the group
+             */
+            async sendGroupClosedConfirmation(gathering) {
+                const recipients = gathering.participants.map(p => `${p.name} <${p.email}>`);
+                const subject = `[Circle Confirmed • 8/8] "${gathering.title}" is now closed & ready!`;
+                const body = `Hello everyone,\n\nYour Gathering Initiatives discussion circle has reached all 8 participants and is now officially closed to new sign-ups!\n\nGATHERING DETAILS:\n• Topic: ${gathering.title}\n• Prompt: ${gathering.description}\n• Date & Time: ${Utils.formatDateTime(gathering.dateTime)}\n• Venue: ${gathering.venue}\n\nYOUR CIRCLE OF 8:\n${gathering.participants.map((p, i) => `${i + 1}. ${p.name}${p.email === gathering.organizer.email ? ' (Organizer)' : ''} — ${p.email}`).join('\n')}\n\nPlease arrive 5–10 minutes early to grab a drink and settle in. Looking forward to a thoughtful conversation!\n\nWarmly,\nGathering Initiatives`;
+
+                const emailRecord = {
+                    id: 'mail_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    type: 'GROUP_CLOSED_BLAST',
+                    badgeText: 'All 8 Participants Blast',
+                    timestamp: new Date().toISOString(),
+                    to: recipients,
+                    subject,
+                    body,
+                    gatheringTitle: gathering.title
+                };
+
+                this._recordAndOptionalSend(emailRecord);
+                return emailRecord;
+            },
+
+            _recordAndOptionalSend(emailRecord) {
+                Store.state.emailLogs.unshift(emailRecord);
+                Store.save();
+                UI.updateEmailBadge();
+                UI.renderEmailDrawer();
+
+                // Optional real EmailJS hook for GitHub Pages deployment
+                if (EMAILJS_CONFIG.enabled && window.emailjs) {
+                    window.emailjs.send(
+                        EMAILJS_CONFIG.serviceId,
+                        emailRecord.type === 'GROUP_CLOSED_BLAST' ? EMAILJS_CONFIG.groupClosedTemplateId : EMAILJS_CONFIG.organizerTemplateId,
+                        {
+                            to_emails: emailRecord.to.join(', '),
+                            subject: emailRecord.subject,
+                            message: emailRecord.body
+                        },
+                        EMAILJS_CONFIG.publicKey
+                    ).catch(err => console.error('EmailJS dispatch error:', err));
+                }
+            }
+        };
+
+        /**
+         * =====================================================================
+         * MODULE 2: UTILITIES & DATE FORMATTING
+         * =====================================================================
+         */
+        const Utils = {
+            formatDateTime(isoString) {
+                const date = new Date(isoString);
+                return date.toLocaleDateString('en-SG', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }) + ' • ' + date.toLocaleTimeString('en-SG', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            },
+            getInitials(name) {
+                return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            },
+            futureDateISO(daysFromNow, hour = 19, minute = 0) {
+                const d = new Date();
+                d.setDate(d.getDate() + daysFromNow);
+                d.setHours(hour, minute, 0, 0);
+                return d.toISOString();
+            },
+            pastDateISO(daysAgo, hour = 10, minute = 30) {
+                const d = new Date();
+                d.setDate(d.getDate() - daysAgo);
+                d.setHours(hour, minute, 0, 0);
+                return d.toISOString();
+            }
+        };
+
+        /**
+         * =====================================================================
+         * MODULE 3: STATE STORE & SEED DATA (GitHub Standalone Persistence)
+         * =====================================================================
+         */
+        const STORAGE_KEY = 'gathering_initiatives_v1';
+
+        const Store = {
+            state: {
+                currentUser: null,
+                users: [],
+                gatherings: [],
+                pastLogs: [],
+                emailLogs: []
+            },
+
+            init() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    try {
+                        this.state = JSON.parse(saved);
+                    } catch (e) {
+                        this.seedDefaults();
+                    }
+                } else {
+                    this.seedDefaults();
+                }
+                this.runExpiryCheck(false);
+            },
+
+            save() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+            },
+
+            seedDefaults() {
+                const demoUsers = [
+                    { id: 'u1', name: 'Wei Jie Lim', email: 'weijie.lim@example.sg' },
+                    { id: 'u2', name: 'Priya Nair', email: 'priya.nair@example.sg' },
+                    { id: 'u3', name: 'Marcus Tan', email: 'marcus.tan@example.sg' },
+                    { id: 'u4', name: 'Aishah Rahman', email: 'aishah.r@example.sg' },
+                    { id: 'u5', name: 'Chloe Wong', email: 'chloe.wong@example.sg' },
+                    { id: 'u6', name: 'Daniel Koh', email: 'daniel.koh@example.sg' },
+                    { id: 'u7', name: 'Siti Aminah', email: 'siti.aminah@example.sg' },
+                    { id: 'u8', name: 'Rohan Menon', email: 'rohan.menon@example.sg' }
+                ];
+
+                const gatherings = [
+                    {
+                        id: 'g1',
+                        title: 'Redefining Success Beyond the Singapore Hustle',
+                        description: 'An open, judgment-free circle on how we measure a good life outside of job titles, salaries, and timelines. Bring one personal story or question.',
+                        dateTime: Utils.futureDateISO(3, 19, 30),
+                        venue: 'Tiong Bahru Bakery Foothills, 70 River Valley Rd',
+                        organizer: demoUsers[0],
+                        // 7 out of 8 spots filled so user can immediately test joining as the 8th person!
+                        participants: [
+                            demoUsers[0],
+                            demoUsers[1],
+                            demoUsers[2],
+                            demoUsers[3],
+                            demoUsers[4],
+                            demoUsers[5],
+                            demoUsers[6]
+                        ],
+                        isClosed: false,
+                        createdAt: Utils.pastDateISO(2)
+                    },
+                    {
+                        id: 'g2',
+                        title: 'Friendship in Our 30s: Keeping Deep Bonds Alive',
+                        description: 'Why does making and maintaining close friendships feel harder as we grow older, and what small rituals help us stay present for each other?',
+                        dateTime: Utils.futureDateISO(6, 15, 0),
+                        venue: 'Book Bar, 57 Duxton Road',
+                        organizer: demoUsers[1],
+                        participants: [
+                            demoUsers[1],
+                            demoUsers[3],
+                            demoUsers[7]
+                        ],
+                        isClosed: false,
+                        createdAt: Utils.pastDateISO(1)
+                    },
+                    {
+                        id: 'g3',
+                        title: 'Digital Sabbaticals & Reclaiming Our Attention',
+                        description: 'Sharing practical experiments on slowing down doomscrolling, rediscovering tactile hobbies, and feeling unhurried on weekends.',
+                        dateTime: Utils.futureDateISO(10, 10, 30),
+                        venue: 'Central Public Library (Level 1 Courtyard), Victoria St',
+                        organizer: demoUsers[2],
+                        participants: [
+                            demoUsers[2],
+                            demoUsers[4],
+                            demoUsers[5],
+                            demoUsers[6],
+                            demoUsers[7]
+                        ],
+                        isClosed: false,
+                        createdAt: Utils.pastDateISO(1)
+                    }
+                ];
+
+                const pastLogs = [
+                    {
+                        id: 'g_past_1',
+                        title: 'What Makes a Neighbourhood Feel Like Home?',
+                        description: 'Reflecting on kopitiam chats, void deck memories, and small acts of neighbourly kindness across HDB estates.',
+                        dateTime: Utils.pastDateISO(4, 10, 0),
+                        venue: 'Common Man Coffee Roasters, Joo Chiat',
+                        organizer: demoUsers[3],
+                        participants: demoUsers.slice(0, 8),
+                        isClosed: true,
+                        archivedAt: Utils.pastDateISO(4, 12, 0)
+                    }
+                ];
+
+                this.state = {
+                    currentUser: demoUsers[7], // Default signed in as Rohan Menon (not yet in g1, ready to be #8!)
+                    users: demoUsers,
+                    gatherings,
+                    pastLogs,
+                    emailLogs: [
+                        {
+                            id: 'mail_seed_1',
+                            type: 'ORGANIZER_JOIN_ALERT',
+                            badgeText: 'Organizer Notification',
+                            timestamp: Utils.pastDateISO(1, 14, 20),
+                            to: ['Wei Jie Lim <weijie.lim@example.sg>'],
+                            subject: '[Gathering Initiatives] Siti Aminah joined "Redefining Success Beyond the Singapore Hustle" (7/8)',
+                            body: 'Hello Wei Jie Lim,\n\nSiti Aminah (siti.aminah@example.sg) joined your gathering. 1 spot remains before the circle closes at 8 participants.',
+                            gatheringTitle: 'Redefining Success Beyond the Singapore Hustle'
+                        }
+                    ]
+                };
+                this.save();
+            },
+
+            /**
+             * Automatic Expiration & Logging Scheduler:
+             * Moves any gathering whose date/time is in the past into pastLogs
+             */
+            runExpiryCheck(notifyUser = false) {
+                const now = new Date();
+                const stillActive = [];
+                let movedCount = 0;
+
+                this.state.gatherings.forEach(g => {
+                    if (new Date(g.dateTime) <= now) {
+                        this.state.pastLogs.unshift({
+                            ...g,
+                            isClosed: true,
+                            archivedAt: now.toISOString()
+                        });
+                        movedCount++;
+                    } else {
+                        stillActive.push(g);
+                    }
+                });
+
+                if (movedCount > 0) {
+                    this.state.gatherings = stillActive;
+                    this.save();
+                    UI.renderAll();
+                    if (notifyUser) {
+                        UI.showToast(
+                            'Past Gathering Archived',
+                            `${movedCount} gathering(s) passed their scheduled date/time and were automatically moved to the Past Gatherings Log.`,
+                            'forest'
+                        );
+                    }
+                }
+            }
+        };
+
+        /**
+         * =====================================================================
+         * MODULE 4: APPLICATION CONTROLLERS & WORKFLOWS
+         * =====================================================================
+         */
+        const App = {
+            init() {
+                Store.init();
+                UI.renderAll();
+                lucide.createIcons();
+
+                // Check for expired gatherings every 30 seconds automatically
+                setInterval(() => Store.runExpiryCheck(true), 30000);
+            },
+
+            handleQuickSwitch(userId) {
+                if (!userId) {
+                    Store.state.currentUser = null;
+                } else {
+                    const found = Store.state.users.find(u => u.id === userId);
+                    if (found) Store.state.currentUser = found;
+                }
+                Store.save();
+                UI.renderAll();
+            },
+
+            handleRegister(event) {
+                event.preventDefault();
+                const name = document.getElementById('regNameInput').value.trim();
+                const email = document.getElementById('regEmailInput').value.trim().toLowerCase();
+
+                if (!name || !email) return;
+
+                let user = Store.state.users.find(u => u.email.toLowerCase() === email);
+                if (user) {
+                    user.name = name; // Update display name if re-linking
+                } else {
+                    user = {
+                        id: 'u_' + Date.now(),
+                        name,
+                        email
+                    };
+                    Store.state.users.push(user);
+                }
+
+                Store.state.currentUser = user;
+                Store.save();
+
+                document.getElementById('regNameInput').value = '';
+                document.getElementById('regEmailInput').value = '';
+                UI.toggleModal('authModal', false);
+                UI.renderAll();
+                UI.showToast('Account Linked', `Signed in as ${user.name} (${user.email})`, 'forest');
+            },
+
+            signOut() {
+                Store.state.currentUser = null;
+                Store.save();
+                UI.renderAll();
+                UI.showToast('Signed Out', 'You are browsing as a public visitor.', 'neutral');
+            },
+
+            openCreateModal() {
+                if (!Store.state.currentUser) {
+                    UI.showToast('Account Required', 'Please register your name and email before proposing a gathering.', 'terracotta');
+                    UI.toggleModal('authModal', true);
+                    return;
+                }
+                // Default datetime input to 2 days from now at 19:00
+                const defaultDate = new Date(Date.now() + 2 * 86400000);
+                defaultDate.setHours(19, 0, 0, 0);
+                const tzOffset = defaultDate.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(defaultDate - tzOffset)).toISOString().slice(0, 16);
+
+                document.getElementById('topicDateTimeInput').value = localISOTime;
+                document.getElementById('createOrganizerPreview').textContent = `${Store.state.currentUser.name} (${Store.state.currentUser.email})`;
+                UI.toggleModal('createModal', true);
+            },
+
+            handleCreateGathering(event) {
+                event.preventDefault();
+                const user = Store.state.currentUser;
+                if (!user) return;
+
+                const title = document.getElementById('topicTitleInput').value.trim();
+                const description = document.getElementById('topicDescInput').value.trim();
+                const dateTimeRaw = document.getElementById('topicDateTimeInput').value;
+                const venue = document.getElementById('topicVenueInput').value.trim();
+
+                const parsedDate = new Date(dateTimeRaw);
+                if (parsedDate <= new Date()) {
+                    UI.showToast('Invalid Date/Time', 'Please choose a date and time in the future.', 'terracotta');
+                    return;
+                }
+
+                const newGathering = {
+                    id: 'g_' + Date.now(),
+                    title,
+                    description,
+                    dateTime: parsedDate.toISOString(),
+                    venue,
+                    organizer: { ...user },
+                    participants: [{ ...user }], // Organizer is #1 of 8
+                    isClosed: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                Store.state.gatherings.unshift(newGathering);
+                Store.save();
+
+                document.getElementById('topicTitleInput').value = '';
+                document.getElementById('topicDescInput').value = '';
+                document.getElementById('topicVenueInput').value = '';
+
+                UI.toggleModal('createModal', false);
+                UI.switchTab('active');
+                UI.renderAll();
+                UI.showToast('Gathering Published!', `Your circle "${title}" is now live on the public board (1/8 filled).`, 'forest');
+            },
+
+            async joinGathering(gatheringId) {
+                const user = Store.state.currentUser;
+                if (!user) {
+                    UI.showToast('Registration Needed', 'Link your name & email first to put your name in a gathering.', 'terracotta');
+                    UI.toggleModal('authModal', true);
+                    return;
+                }
+
+                const gathering = Store.state.gatherings.find(g => g.id === gatheringId);
+                if (!gathering) return;
+
+                if (gathering.isClosed || gathering.participants.length >= 8) {
+                    UI.showToast('Circle Closed', 'This gathering has already reached 8 participants.', 'terracotta');
+                    return;
+                }
+
+                const alreadyJoined = gathering.participants.some(p => p.email.toLowerCase() === user.email.toLowerCase());
+                if (alreadyJoined) {
+                    UI.showToast('Already Joined', 'Your name is already in this discussion circle.', 'neutral');
+                    return;
+                }
+
+                // Add participant
+                gathering.participants.push({ ...user });
+
+                // Check if this participant is #8
+                if (gathering.participants.length >= 8) {
+                    gathering.isClosed = true;
+                    Store.save();
+                    UI.renderAll();
+
+                    // Trigger 1 & Trigger 2
+                    await EmailService.sendOrganizerJoinAlert(gathering, user);
+                    await EmailService.sendGroupClosedConfirmation(gathering);
+
+                    UI.showToast(
+                        'Circle Full (8/8) & Closed!',
+                        `You are #8! Confirmation emails have been dispatched to all 8 participants.`,
+                        'mustard'
+                    );
+                } else {
+                    Store.save();
+                    UI.renderAll();
+
+                    // Trigger 1: Email to Organizer
+                    await EmailService.sendOrganizerJoinAlert(gathering, user);
+
+                    UI.showToast(
+                        'You Joined the Circle!',
+                        `Email notification sent to organizer ${gathering.organizer.name} (${gathering.participants.length}/8 spots filled).`,
+                        'forest'
+                    );
+                }
+            },
+
+            /**
+             * Demo Helper: Simulates the earliest upcoming gathering passing its scheduled time
+             * so the user can immediately verify automatic removal & logging.
+             */
+            simulateTimeExpiry() {
+                if (Store.state.gatherings.length === 0) {
+                    UI.showToast('No Active Gatherings', 'Create a gathering or reset sample data to test expiry.', 'neutral');
+                    return;
+                }
+                // Sort by soonest date and expire it
+                const sorted = [...Store.state.gatherings].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+                const target = Store.state.gatherings.find(g => g.id === sorted[0].id);
+                target.dateTime = new Date(Date.now() - 60000).toISOString(); // 1 minute in the past
+                Store.runExpiryCheck(true);
+            },
+
+            clearEmailLogs() {
+                Store.state.emailLogs = [];
+                Store.save();
+                UI.updateEmailBadge();
+                UI.renderEmailDrawer();
+            },
+
+            resetDemoData() {
+                localStorage.removeItem(STORAGE_KEY);
+                Store.seedDefaults();
+                UI.renderAll();
+                UI.showToast('Demo Reset', 'Sample gatherings and participant accounts restored.', 'forest');
+            }
+        };
+
+        /**
+         * =====================================================================
+         * MODULE 5: UI RENDERING ENGINE
+         * =====================================================================
+         */
+        const UI = {
+            currentTab: 'active',
+
+            renderAll() {
+                this.renderAuthHeader();
+                this.renderQuickUserSwitcher();
+                this.renderGatherings();
+                this.renderPastLogs();
+                this.updateCounts();
+                this.updateEmailBadge();
+                this.renderEmailDrawer();
+                lucide.createIcons();
+            },
+
+            switchTab(tab) {
+                this.currentTab = tab;
+                const activeSec = document.getElementById('activeGatheringsSection');
+                const pastSec = document.getElementById('pastGatheringsSection');
+                const activeBtn = document.getElementById('tabActiveBtn');
+                const pastBtn = document.getElementById('tabPastBtn');
+
+                if (tab === 'active') {
+                    activeSec.classList.remove('hidden');
+                    pastSec.classList.add('hidden');
+                    activeBtn.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer bg-white text-forest-900 shadow-xs';
+                    pastBtn.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer text-charcoal/70 hover:text-forest-900';
+                } else {
+                    activeSec.classList.add('hidden');
+                    pastSec.classList.remove('hidden');
+                    pastBtn.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer bg-white text-forest-900 shadow-xs';
+                    activeBtn.className = 'px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer text-charcoal/70 hover:text-forest-900';
+                }
+            },
+
+            renderAuthHeader() {
+                const container = document.getElementById('headerAuthArea');
+                const user = Store.state.currentUser;
+
+                if (user) {
+                    container.innerHTML = `
+                        <div class="flex items-center gap-2 bg-white border border-cream-300 pl-3 pr-2 py-1.5 rounded-full shadow-2xs">
+                            <div class="w-7 h-7 rounded-full bg-terracotta-100 text-terracotta-600 font-bold text-xs flex items-center justify-center">
+                                ${Utils.getInitials(user.name)}
+                            </div>
+                            <div class="hidden md:block text-left pr-1">
+                                <p class="text-xs font-bold text-forest-900 leading-none">${this.escapeHTML(user.name)}</p>
+                                <p class="text-[10px] text-charcoal/60 leading-tight">${this.escapeHTML(user.email)}</p>
+                            </div>
+                            <button onclick="App.signOut()" class="p-1.5 rounded-full text-charcoal/50 hover:text-terracotta-600 hover:bg-cream-100 transition cursor-pointer" title="Sign Out">
+                                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <button onclick="UI.toggleModal('authModal', true)" class="inline-flex items-center gap-1.5 bg-white hover:bg-cream-200 text-forest-900 border border-cream-300 text-sm font-semibold px-4 py-2.5 rounded-full transition cursor-pointer">
+                            <i data-lucide="user-plus" class="w-4 h-4 text-terracotta-500"></i>
+                            <span>Register / Sign In</span>
+                        </button>
+                    `;
+                }
+            },
+
+            renderQuickUserSwitcher() {
+                const select = document.getElementById('quickUserSwitch');
+                const modalList = document.getElementById('authModalUserList');
+                const currentId = Store.state.currentUser ? Store.state.currentUser.id : '';
+
+                select.innerHTML = `<option value="" ${currentId === '' ? 'selected' : ''}>Public Visitor (Logged Out)</option>` +
+                    Store.state.users.map(u => `
+                        <option value="${u.id}" ${u.id === currentId ? 'selected' : ''}>${this.escapeHTML(u.name)} (${this.escapeHTML(u.email)})</option>
+                    `).join('');
+
+                modalList.innerHTML = Store.state.users.map(u => `
+                    <button type="button" onclick="App.handleQuickSwitch('${u.id}'); UI.toggleModal('authModal', false);" class="text-xs px-2.5 py-1.5 rounded-lg bg-white hover:bg-forest-700 hover:text-white border border-cream-300 text-forest-900 font-medium transition cursor-pointer">
+                        ${this.escapeHTML(u.name)}
+                    </button>
+                `).join('');
+            },
+
+            renderGatherings() {
+                const grid = document.getElementById('gatheringsGrid');
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+                const statusFilter = document.getElementById('statusFilter').value;
+                const currentUser = Store.state.currentUser;
+
+                let filtered = Store.state.gatherings.filter(g => {
+                    const matchesSearch = !searchTerm ||
+                        g.title.toLowerCase().includes(searchTerm) ||
+                        g.description.toLowerCase().includes(searchTerm) ||
+                        g.venue.toLowerCase().includes(searchTerm) ||
+                        g.organizer.name.toLowerCase().includes(searchTerm);
+
+                    const isFull = g.isClosed || g.participants.length >= 8;
+                    const matchesStatus = statusFilter === 'all' ||
+                        (statusFilter === 'open' && !isFull) ||
+                        (statusFilter === 'closed' && isFull);
+
+                    return matchesSearch && matchesStatus;
+                });
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full bg-white rounded-3xl border border-cream-300 p-12 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-cream-200 text-forest-700 flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="coffee" class="w-7 h-7"></i>
+                            </div>
+                            <h3 class="font-editorial text-xl font-bold text-forest-900 mb-1">No matching gatherings found</h3>
+                            <p class="text-sm text-charcoal/70 mb-5">Try adjusting your filters or start a new conversation circle of your own.</p>
+                            <button onclick="App.openCreateModal()" class="inline-flex items-center gap-2 bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition cursor-pointer">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Propose a Topic</span>
+                            </button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(g => {
+                    const count = g.participants.length;
+                    const isClosed = g.isClosed || count >= 8;
+                    const spotsLeft = Math.max(0, 8 - count);
+                    const progressPercent = Math.min(100, (count / 8) * 100);
+                    const isUserJoined = currentUser && g.participants.some(p => p.email.toLowerCase() === currentUser.email.toLowerCase());
+                    const isOrganizer = currentUser && g.organizer.email.toLowerCase() === currentUser.email.toLowerCase();
+
+                    // Generate 8 visual seat indicators
+                    const seatPills = g.participants.map((p, idx) => `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${idx === 0 ? 'bg-forest-700/10 text-forest-900 border border-forest-700/20' : 'bg-cream-100 text-charcoal border border-cream-300'}" title="${this.escapeHTML(p.name)}">
+                            <span class="w-4 h-4 rounded-full ${idx === 0 ? 'bg-forest-700 text-white' : 'bg-terracotta-500/85 text-white'} text-[9px] font-bold flex items-center justify-center">
+                                ${Utils.getInitials(p.name)}
+                            </span>
+                            <span>${this.escapeHTML(p.name.split(' ')[0])}</span>
+                            ${idx === 0 ? '<span class="text-[10px] text-forest-700 font-semibold">(Host)</span>' : ''}
+                        </span>
+                    `).join('');
+
+                    const emptySeats = Array.from({ length: spotsLeft }).map(() => `
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-charcoal/40 border border-dashed border-cream-300 bg-cream-50/50">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cream-300"></span>
+                            <span>Open seat</span>
+                        </span>
+                    `).join('');
+
+                    // CTA Button Logic
+                    let actionButton = '';
+                    if (isClosed) {
+                        actionButton = `
+                            <button disabled class="w-full py-3 px-4 rounded-2xl bg-cream-200 text-charcoal/60 text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                                <span>Circle Closed (8/8 Full)</span>
+                            </button>
+                        `;
+                    } else if (isUserJoined) {
+                        actionButton = `
+                            <div class="w-full py-3 px-4 rounded-2xl bg-forest-700/10 text-forest-800 border border-forest-700/20 text-sm font-semibold flex items-center justify-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-forest-700"></i>
+                                <span>${isOrganizer ? 'You are Hosting This Circle' : 'You’re In! Spot Reserved'}</span>
+                            </div>
+                        `;
+                    } else {
+                        actionButton = `
+                            <button onclick="App.joinGathering('${g.id}')" class="w-full py-3 px-4 rounded-2xl ${spotsLeft === 1 ? 'bg-terracotta-500 hover:bg-terracotta-600' : 'bg-forest-700 hover:bg-forest-800'} text-white text-sm font-semibold shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span>${spotsLeft === 1 ? 'Claim Final 8th Spot & Close Circle' : 'Put My Name In'}</span>
+                            </button>
+                        `;
+                    }
+
+                    return `
+                        <article class="bg-white rounded-3xl border ${isClosed ? 'border-cream-300/90' : 'border-cream-300 hover:border-forest-600/50'} shadow-card flex flex-col justify-between p-6 transition duration-200">
+                            <div>
+                                <!-- Card Top: Status & Spots Badge -->
+                                <div class="flex items-center justify-between gap-2 mb-4">
+                                    ${isClosed
+                                        ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-charcoal text-white">
+                                             <i data-lucide="lock" class="w-3 h-3 text-mustard-400"></i> Closed • 8/8
+                                           </span>`
+                                        : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${spotsLeft === 1 ? 'bg-terracotta-100 text-terracotta-600' : 'bg-mustard-100 text-forest-900'}">
+                                             <span class="w-2 h-2 rounded-full ${spotsLeft === 1 ? 'bg-terracotta-500 animate-pulse' : 'bg-forest-700'}"></span>
+                                             ${spotsLeft === 1 ? '1 Last Spot!' : `Open • ${spotsLeft} spots left`}
+                                           </span>`
+                                    }
+                                    <span class="text-xs font-bold text-forest-800">${count} / 8 joined</span>
+                                </div>
+
+                                <!-- Topic Title & Prompt -->
+                                <h3 class="font-editorial text-xl font-bold text-forest-900 leading-snug mb-2">
+                                    ${this.escapeHTML(g.title)}
+                                </h3>
+                                <p class="text-sm text-charcoal/75 leading-relaxed mb-5">
+                                    ${this.escapeHTML(g.description)}
+                                </p>
+
+                                <!-- Date/Time & Venue Metadata Box -->
+                                <div class="bg-cream-100 rounded-2xl p-3.5 space-y-2.5 mb-5 border border-cream-200">
+                                    <div class="flex items-start gap-2.5 text-xs">
+                                        <i data-lucide="calendar" class="w-4 h-4 text-terracotta-500 shrink-0 mt-0.5"></i>
+                                        <div>
+                                            <span class="text-charcoal/60 block text-[10px] uppercase font-bold tracking-wider">Date & Time</span>
+                                            <span class="font-semibold text-forest-900">${Utils.formatDateTime(g.dateTime)}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5 text-xs">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-forest-700 shrink-0 mt-0.5"></i>
+                                        <div>
+                                            <span class="text-charcoal/60 block text-[10px] uppercase font-bold tracking-wider">Venue</span>
+                                            <span class="font-semibold text-forest-900">${this.escapeHTML(g.venue)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Capacity Progress Bar -->
+                                <div class="mb-3">
+                                    <div class="flex items-center justify-between text-[11px] font-semibold text-charcoal/65 mb-1.5">
+                                        <span>Public Participant Roster</span>
+                                        <span>${Math.round(progressPercent)}% Full</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-cream-200 rounded-full overflow-hidden">
+                                        <div class="h-full transition-all duration-500 rounded-full ${isClosed ? 'bg-charcoal' : (spotsLeft === 1 ? 'bg-terracotta-500' : 'bg-forest-700')}" style="width: ${progressPercent}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Public Roster Pills -->
+                                <div class="flex flex-wrap gap-1.5 mb-6">
+                                    ${seatPills}
+                                    ${emptySeats}
+                                </div>
+                            </div>
+
+                            <!-- Card Footer Action -->
+                            <div class="pt-2 border-t border-cream-200/80">
+                                ${actionButton}
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+
+                lucide.createIcons();
+            },
+
+            renderPastLogs() {
+                const container = document.getElementById('pastGatheringsList');
+                const logs = Store.state.pastLogs;
+
+                if (logs.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-white rounded-3xl border border-cream-300 p-10 text-center text-sm text-charcoal/70">
+                            No past gatherings have expired yet.
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = logs.map(log => `
+                    <div class="bg-white rounded-2xl border border-cream-300 p-5 sm:p-6 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="space-y-1.5 max-w-2xl">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cream-200 text-charcoal/80">
+                                    Completed & Logged
+                                </span>
+                                <span class="text-xs text-charcoal/60">
+                                    Held on ${Utils.formatDateTime(log.dateTime)}
+                                </span>
+                            </div>
+                            <h3 class="font-editorial text-lg font-bold text-forest-900">${this.escapeHTML(log.title)}</h3>
+                            <p class="text-xs text-charcoal/75">${this.escapeHTML(log.description)}</p>
+                            <div class="flex flex-wrap items-center gap-4 pt-1 text-xs text-charcoal/70">
+                                <span class="inline-flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-forest-700"></i> ${this.escapeHTML(log.venue)}</span>
+                                <span class="inline-flex items-center gap-1"><i data-lucide="user" class="w-3.5 h-3.5 text-terracotta-500"></i> Organized by ${this.escapeHTML(log.organizer.name)}</span>
+                            </div>
+                        </div>
+
+                        <div class="lg:text-right shrink-0 border-t lg:border-t-0 pt-3 lg:pt-0 border-cream-200">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-charcoal/50 block mb-1.5">
+                                Final Attendance (${log.participants.length}/8)
+                            </span>
+                            <div class="flex flex-wrap lg:justify-end gap-1">
+                                ${log.participants.map(p => `
+                                    <span class="px-2 py-0.5 rounded-md bg-cream-100 border border-cream-300 text-[11px] font-medium text-forest-900">
+                                        ${this.escapeHTML(p.name)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                lucide.createIcons();
+            },
+
+            renderEmailDrawer() {
+                const list = document.getElementById('emailLogList');
+                const logs = Store.state.emailLogs;
+
+                if (logs.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-12 text-charcoal/60 text-sm">
+                            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-3 text-charcoal/30"></i>
+                            <p>No automated emails dispatched yet.</p>
+                            <p class="text-xs mt-1">Join a gathering to trigger an organizer alert or 8-person confirmation.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                    return;
+                }
+
+                list.innerHTML = logs.map(mail => {
+                    const isBlast = mail.type === 'GROUP_CLOSED_BLAST';
+                    return `
+                        <div class="bg-white rounded-2xl border ${isBlast ? 'border-terracotta-500/50 ring-2 ring-terracotta-500/10' : 'border-cream-300'} p-4 shadow-xs space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isBlast ? 'bg-terracotta-500 text-white' : 'bg-forest-700/10 text-forest-800'}">
+                                    ${this.escapeHTML(mail.badgeText)}
+                                </span>
+                                <span class="text-[11px] text-charcoal/50">${Utils.formatDateTime(mail.timestamp)}</span>
+                            </div>
+
+                            <div class="text-xs space-y-1 border-b border-cream-200 pb-2">
+                                <p class="text-charcoal/70"><strong class="text-charcoal">To:</strong> ${this.escapeHTML(mail.to.join(', '))}</p>
+                                <p class="font-bold text-forest-900">${this.escapeHTML(mail.subject)}</p>
+                            </div>
+
+                            <pre class="text-xs text-charcoal/80 whitespace-pre-wrap font-sans bg-cream-100 p-3 rounded-xl border border-cream-200 leading-relaxed">${this.escapeHTML(mail.body)}</pre>
+                        </div>
+                    `;
+                }).join('');
+
+                lucide.createIcons();
+            },
+
+            updateCounts() {
+                document.getElementById('activeCountBadge').textContent = Store.state.gatherings.length;
+                document.getElementById('pastCountBadge').textContent = Store.state.pastLogs.length;
+            },
+
+            updateEmailBadge() {
+                document.getElementById('emailBadgeCount').textContent = Store.state.emailLogs.length;
+            },
+
+            toggleModal(modalId, show) {
+                const modal = document.getElementById(modalId);
+                if (show) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                } else {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                lucide.createIcons();
+            },
+
+            toggleEmailDrawer(show) {
+                const drawer = document.getElementById('emailDrawer');
+                const backdrop = document.getElementById('emailDrawerBackdrop');
+                if (show) {
+                    backdrop.classList.remove('hidden');
+                    drawer.classList.remove('translate-x-full');
+                } else {
+                    backdrop.classList.add('hidden');
+                    drawer.classList.add('translate-x-full');
+                }
+            },
+
+            showToast(title, message, tone = 'forest') {
+                const container = document.getElementById('toastContainer');
+                const id = 'toast_' + Date.now();
+
+                const styles = {
+                    forest: 'bg-forest-900 text-white border-forest-700',
+                    terracotta: 'bg-terracotta-600 text-white border-terracotta-500',
+                    mustard: 'bg-mustard-500 text-forest-950 border-mustard-400',
+                    neutral: 'bg-charcoal text-white border-charcoal'
+                };
+
+                const el = document.createElement('div');
+                el.id = id;
+                el.className = `pointer-events-auto p-4 rounded-2xl border shadow-xl fade-in ${styles[tone] || styles.forest}`;
+                el.innerHTML = `
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider opacity-90">${this.escapeHTML(title)}</p>
+                            <p class="text-xs mt-1 leading-relaxed opacity-95">${this.escapeHTML(message)}</p>
+                        </div>
+                        <button onclick="document.getElementById('${id}')?.remove()" class="opacity-70 hover:opacity-100 cursor-pointer">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => el.remove(), 300);
+                }, 5500);
+            },
+
+            escapeHTML(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+        };
+
+        // Boot application on window load
+        window.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
