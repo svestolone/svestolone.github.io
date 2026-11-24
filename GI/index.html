@@ -504,24 +504,39 @@ create or replace view public_gathering_participants as
   select id, gathering_id, user_id, display_name, joined_at
   from gathering_participants;
 
+-- 4. Grant Table & View Permissions to API Roles
+grant usage on schema public to anon, authenticated;
+grant select on gatherings to anon, authenticated;
+grant insert, update on gatherings to authenticated;
+grant select, insert, delete on gathering_participants to authenticated;
 grant select on public_gathering_participants to anon, authenticated;
 
--- 4. Enable Row-Level Security (RLS)
+-- 5. Enable Row-Level Security (RLS)
 alter table gatherings enable row level security;
 alter table gathering_participants enable row level security;
 
+drop policy if exists "Anyone can read gatherings" on gatherings;
 create policy "Anyone can read gatherings" on gatherings for select using (true);
+
+drop policy if exists "Auth users create gatherings" on gatherings;
 create policy "Auth users create gatherings" on gatherings for insert with check (auth.uid() = organizer_id);
+
+drop policy if exists "Organizers update own gatherings" on gatherings;
 create policy "Organizers update own gatherings" on gatherings for update using (auth.uid() = organizer_id);
 
 -- Only organizer (or participant themselves) can read raw table with emails!
+drop policy if exists "Organizer or self reads emails" on gathering_participants;
 create policy "Organizer or self reads emails" on gathering_participants
   for select using (
     auth.uid() = user_id or
     exists (select 1 from gatherings g where g.id = gathering_id and g.organizer_id = auth.uid())
   );
+
+drop policy if exists "Auth users join open gatherings" on gathering_participants;
 create policy "Auth users join open gatherings" on gathering_participants
   for insert with check (auth.uid() = user_id);
+
+drop policy if exists "Participants can leave" on gathering_participants;
 create policy "Participants can leave" on gathering_participants
   for delete using (auth.uid() = user_id);</pre>
                         <button type="button" onclick="UI.copySqlSnippet()" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cream-200 hover:bg-cream-300 text-forest-900 text-xs font-semibold cursor-pointer">
@@ -574,8 +589,8 @@ create policy "Participants can leave" on gathering_participants
          * =====================================================================
          */
         const DEFAULT_SUPABASE_CONFIG = {
-            url: 'https://cmoeznmecemduigdnftd.supabase.co',      // e.g., 'https://xyzcompany.supabase.co'
-            anonKey: 'sb_publishable__LV4omqN9PGqLgSt7sssGQ_j83oUD-K'   // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+            url: '',      // e.g., 'https://xyzcompany.supabase.co'
+            anonKey: ''   // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
 
         /**
