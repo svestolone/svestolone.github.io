@@ -12,43 +12,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        editorial: ['"Instrument Serif"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                    },
                     colors: {
                         cream: {
                             50: '#FDFBF7',
-                            100: '#FAF7F2',
-                            200: '#F3EDE2',
-                            300: '#E6DEC8',
+                            100: '#F9F5EC',
+                            200: '#F2EBD9',
+                            300: '#E6DBC2',
                         },
                         forest: {
-                            600: '#498B6E',
-                            700: '#3D7A5F',
-                            800: '#2E5E49',
-                            900: '#1F2421',
+                            600: '#2D6A4F',
+                            700: '#1B4332',
+                            800: '#143326',
+                            900: '#0D2219',
                         },
                         terracotta: {
-                            500: '#D96B43',
-                            600: '#C25933',
                             100: '#FCECE6',
+                            400: '#E57A54',
+                            500: '#D96B43',
+                            600: '#C05630',
                         },
                         mustard: {
-                            400: '#F7C631',
-                            500: '#F2B705',
-                            100: '#FEF6DC',
+                            100: '#FBF3DB',
+                            400: '#E9C46A',
+                            500: '#DFB346',
                         },
-                        charcoal: '#1F2421'
-                    },
-                    fontFamily: {
-                        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        charcoal: '#242926',
                     },
                     boxShadow: {
-                        'soft': '0 10px 30px -5px rgba(61, 122, 95, 0.06)',
-                        'card': '0 4px 20px -2px rgba(31, 36, 33, 0.05)',
+                        'soft': '0 10px 30px -5px rgba(27, 67, 50, 0.06)',
+                        'card': '0 4px 20px -2px rgba(36, 41, 38, 0.05)',
                     }
                 }
             }
@@ -57,28 +60,9 @@
     <style>
         body {
             background-color: #FDFBF7;
-            color: #1F2421;
+            color: #242926;
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-font-smoothing: antialiased;
-        }
-        .font-editorial {
-            font-family: 'Instrument Serif', Georgia, serif;
-            letter-spacing: 0.01em;
-        }
-        /* Custom subtle scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #FAF7F2;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #D5CCB8;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #2D5A4C;
         }
         .fade-in {
             animation: fadeIn 0.25s ease-out forwards;
@@ -87,27 +71,47 @@
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F9F5EC;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D5C8AC;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1B4332;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-mustard-500/30 selection:text-forest-900">
+<body class="min-h-screen flex flex-col selection:bg-mustard-400 selection:text-forest-900">
 
     <!-- =====================================================================
-         TOP UTILITY BAR
+         TOAST NOTIFICATION CONTAINER
+         ===================================================================== -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- =====================================================================
+         TOP UTILITY & CLOUD SYNC BAR
          ===================================================================== -->
     <div class="bg-forest-900 text-cream-100 text-xs py-2.5 px-4 border-b border-forest-800">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-mustard-500 text-forest-900">
-                    Community Circles
+                <span id="cloudStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-mustard-500 text-forest-900">
+                    <span class="w-1.5 h-1.5 rounded-full bg-forest-900"></span>
+                    <span>Local Preview Mode</span>
                 </span>
                 <span class="text-cream-200 hidden sm:inline">Private participant emails • Custom circle sizes • Auto-archiving</span>
             </div>
             
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <!-- GitHub Guide Trigger -->
-                <button onclick="UI.toggleModal('githubModal', true)" class="inline-flex items-center gap-1.5 bg-cream-100/10 hover:bg-cream-100/20 text-cream-100 px-3 py-1 rounded-lg transition cursor-pointer">
-                    <i data-lucide="github" class="w-3.5 h-3.5"></i>
-                    <span>GitHub Setup</span>
+                <!-- Supabase Cloud Setup & SQL Guide Trigger -->
+                <button onclick="UI.toggleModal('githubModal', true)" class="inline-flex items-center gap-1.5 bg-cream-100/15 hover:bg-cream-100/25 text-cream-100 px-3 py-1 rounded-lg transition cursor-pointer">
+                    <i data-lucide="database" class="w-3.5 h-3.5 text-mustard-400"></i>
+                    <span>Cloud & GitHub Setup</span>
                 </button>
             </div>
         </div>
@@ -276,20 +280,15 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-4 text-xs text-cream-300">
-                <button onclick="UI.toggleModal('githubModal', true)" class="hover:text-white underline underline-offset-4 cursor-pointer">GitHub Pages & Backend Setup</button>
+                <button onclick="UI.toggleModal('githubModal', true)" class="hover:text-white underline underline-offset-4 cursor-pointer">Cloud Database & GitHub Setup</button>
                 <span>•</span>
-                <button onclick="App.resetDemoData()" class="hover:text-terracotta-400 underline underline-offset-4 cursor-pointer">Reset Sample Circles</button>
+                <button id="resetDemoFooterBtn" onclick="App.resetDemoData()" class="hover:text-terracotta-400 underline underline-offset-4 cursor-pointer">Reset Local Sample Circles</button>
             </div>
         </div>
     </footer>
 
     <!-- =====================================================================
-         TOAST NOTIFICATION CONTAINER
-         ===================================================================== -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
-
-    <!-- =====================================================================
-         MODAL 1: PASSWORD-PROTECTED SIGN IN & REGISTER MODAL
+         MODAL 1: SIGN IN / REGISTER MODAL
          ===================================================================== -->
     <div id="authModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
         <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl fade-in relative">
@@ -297,64 +296,56 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <div class="w-12 h-12 rounded-2xl bg-mustard-100 text-forest-900 flex items-center justify-center mb-4">
-                <i data-lucide="shield-check" class="w-6 h-6 text-forest-700"></i>
+            <div class="mb-5">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mustard-100 text-forest-900 text-xs font-semibold mb-2">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Member Verification
+                </span>
+                <h2 class="font-editorial text-3xl text-forest-900">Community Account</h2>
+                <p class="text-xs text-charcoal/75 mt-1">Sign in or create an account to organize or join a circle. Your email is hidden from the public and only shared with your circle's organizer.</p>
             </div>
 
-            <!-- Auth Mode Switcher Tabs -->
+            <!-- Mode Switcher Tabs -->
             <div class="grid grid-cols-2 gap-1.5 bg-cream-200/80 p-1 rounded-xl mb-5">
-                <button type="button" id="authTabLogin" onclick="UI.switchAuthMode('login')" class="py-2 rounded-lg text-xs font-bold transition bg-white text-forest-900 shadow-2xs cursor-pointer">
+                <button id="authTabLogin" type="button" onclick="UI.switchAuthMode('login')" class="py-2 rounded-lg text-xs font-bold transition bg-white text-forest-900 shadow-2xs cursor-pointer">
                     Sign In
                 </button>
-                <button type="button" id="authTabRegister" onclick="UI.switchAuthMode('register')" class="py-2 rounded-lg text-xs font-bold transition text-charcoal/70 hover:text-forest-900 cursor-pointer">
+                <button id="authTabRegister" type="button" onclick="UI.switchAuthMode('register')" class="py-2 rounded-lg text-xs font-bold transition text-charcoal/70 hover:text-forest-900 cursor-pointer">
                     Create Account
                 </button>
             </div>
 
-            <!-- SIGN IN FORM -->
+            <!-- Login Form -->
             <form id="loginForm" onsubmit="App.handleLogin(event)" class="space-y-4">
                 <div>
-                    <h2 class="font-editorial text-3xl text-forest-900 mb-1">Welcome Back</h2>
-                    <p class="text-xs text-charcoal/75 mb-4">
-                        Sign in with your registered email and password to propose or join a gathering. Your email is never shown publicly.
-                    </p>
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <input type="email" id="loginEmailInput" required placeholder="you@example.com" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Email Address</label>
-                    <input type="email" id="loginEmailInput" required placeholder="you@example.sg" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Password</label>
+                    <input type="password" id="loginPasswordInput" required placeholder="Enter your password" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Password</label>
-                    <input type="password" id="loginPasswordInput" required placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
-                </div>
-                <p id="authErrorMsg" class="text-xs font-semibold text-terracotta-600 hidden"></p>
-                <button type="submit" class="w-full py-3.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm shadow-sm transition cursor-pointer mt-2">
-                    Sign In
+                <p id="authErrorMsg" class="hidden text-xs font-medium text-terracotta-600 bg-terracotta-100/80 px-3 py-2 rounded-xl"></p>
+                <button type="submit" class="w-full py-3 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm shadow-sm transition cursor-pointer">
+                    Sign In to Participate
                 </button>
             </form>
 
-            <!-- REGISTER FORM -->
-            <form id="registerForm" onsubmit="App.handleRegister(event)" class="space-y-4 hidden">
+            <!-- Register Form -->
+            <form id="registerForm" onsubmit="App.handleRegister(event)" class="hidden space-y-4">
                 <div>
-                    <h2 class="font-editorial text-3xl text-forest-900 mb-1">Join the Community</h2>
-                    <p class="text-xs text-charcoal/75 mb-4">
-                        Only your Display Name appears on public gathering boards. Your email is kept strictly private for session notifications.
-                    </p>
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Public Display Name</label>
+                    <input type="text" id="regNameInput" required placeholder="e.g., Mei Ling Tan" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Display Name (Shown Publicly)</label>
-                    <input type="text" id="regNameInput" required maxlength="40" placeholder="e.g., Mei Lin Tan" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Email Address (Private to Organizers)</label>
+                    <input type="email" id="regEmailInput" required placeholder="e.g., meiling@example.com" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Email Address (Kept Private)</label>
-                    <input type="email" id="regEmailInput" required placeholder="e.g., meilin@example.sg" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Create Password (Min 6 chars)</label>
+                    <input type="password" id="regPasswordInput" required minlength="6" placeholder="Choose a secure password" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Password (Min. 6 Characters)</label>
-                    <input type="password" id="regPasswordInput" required minlength="6" placeholder="Create a secure password" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
-                </div>
-                <p id="regErrorMsg" class="text-xs font-semibold text-terracotta-600 hidden"></p>
-                <button type="submit" class="w-full py-3.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm shadow-sm transition cursor-pointer mt-2">
+                <p id="regErrorMsg" class="hidden text-xs font-medium text-terracotta-600 bg-terracotta-100/80 px-3 py-2 rounded-xl"></p>
+                <button type="submit" class="w-full py-3 rounded-xl bg-forest-700 hover:bg-forest-800 text-white font-semibold text-sm shadow-sm transition cursor-pointer">
                     Register & Sign In
                 </button>
             </form>
@@ -362,7 +353,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 2: CREATE A NEW GATHERING (ORGANIZER FLOW)
+         MODAL 2: PROPOSE A NEW GATHERING TOPIC MODAL
          ===================================================================== -->
     <div id="createModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
         <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl fade-in relative max-h-[92vh] overflow-y-auto">
@@ -370,53 +361,47 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-forest-700/10 text-forest-800 text-xs font-semibold mb-3">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>You will be Participant #1 (Host)</span>
+            <div class="mb-6">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-terracotta-100 text-terracotta-600 text-xs font-semibold mb-2">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Host a Circle
+                </span>
+                <h2 class="font-editorial text-3xl text-forest-900">Propose a Discussion Topic</h2>
+                <p class="text-xs text-charcoal/75 mt-1">You will be listed as the organizer (Participant #1) and can view participant emails to coordinate the meetup.</p>
             </div>
-
-            <h2 class="font-editorial text-3xl text-forest-900 mb-1.5">Start a New Gathering</h2>
-            <p class="text-sm text-charcoal/75 mb-5">
-                Propose a meaningful question or theme and choose how many people you want to invite. You can also close the group anytime.
-            </p>
 
             <form onsubmit="App.handleCreateGathering(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Discussion Topic *</label>
-                    <input type="text" id="topicTitleInput" required maxlength="90" placeholder="e.g., What does 'enough' look like in modern career life?" class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Discussion Topic / Question</label>
+                    <input type="text" id="topicTitleInput" required maxlength="100" placeholder="e.g., What does slow living look like in Singapore?" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Conversation Prompt / Context *</label>
-                    <textarea id="topicDescInput" required rows="3" maxlength="280" placeholder="Share a couple of guiding questions or what inspired this topic..." class="w-full px-4 py-3 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700"></textarea>
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Context & Conversation Prompt</label>
+                    <textarea id="topicDescInput" required rows="3" maxlength="320" placeholder="Share a short prompt on what sparked this topic and what you hope to explore together..." class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700"></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Date & Time *</label>
-                        <input type="datetime-local" id="topicDateTimeInput" required class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                        <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Date & Time</label>
+                        <input type="datetime-local" id="topicDateTimeInput" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                     </div>
+
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Max Group Size (Incl. You) *</label>
-                        <input type="number" id="topicCapacityInput" required min="2" max="20" value="8" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                        <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Max Group Size (Pax)</label>
+                        <input type="number" id="topicCapacityInput" required min="2" max="20" value="8" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-forest-900 mb-1.5">Venue / Location *</label>
-                    <input type="text" id="topicVenueInput" required placeholder="e.g., Plain Vanilla, Tiong Bahru" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
+                    <label class="block text-xs font-semibold text-forest-900 uppercase tracking-wider mb-1.5">Venue / Meetup Spot</label>
+                    <input type="text" id="topicVenueInput" required placeholder="e.g., National Library Level 5 Study Lounge" class="w-full px-4 py-2.5 rounded-xl bg-white border border-cream-300 text-sm focus:outline-none focus:border-forest-700">
                 </div>
 
-                <div class="bg-cream-200/80 rounded-xl p-3.5 text-xs text-charcoal/80 flex items-center justify-between">
-                    <span>Public Host Name: <strong id="createOrganizerPreview" class="text-forest-900"></strong></span>
-                    <span class="font-semibold text-forest-700">Participant emails visible only to you</span>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 pt-2">
-                    <button type="button" onclick="UI.toggleModal('createModal', false)" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal/70 hover:bg-cream-200 transition cursor-pointer">
+                <div class="pt-2 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="UI.toggleModal('createModal', false)" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-charcoal/70 hover:bg-cream-200 transition cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold shadow-sm transition cursor-pointer">
                         Publish Gathering
                     </button>
                 </div>
@@ -425,7 +410,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 3: ORGANIZER PARTICIPANT ROSTER & EMAIL MODAL (HOST ONLY)
+         MODAL 3: ORGANIZER PRIVATE PARTICIPANT ROSTER & EMAILS MODAL
          ===================================================================== -->
     <div id="organizerRosterModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
         <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl fade-in relative max-h-[90vh] overflow-y-auto">
@@ -433,27 +418,25 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
 
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mustard-100 text-forest-900 text-xs font-bold mb-3">
-                <i data-lucide="shield" class="w-3.5 h-3.5 text-forest-700"></i>
-                <span>Private Organizer View</span>
+            <div class="mb-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-700 text-white text-xs font-semibold mb-2">
+                    <i data-lucide="lock" class="w-3 h-3 text-mustard-400"></i> Organizer Private View
+                </span>
+                <h2 id="rosterModalTitle" class="font-editorial text-2xl sm:text-3xl text-forest-900 leading-tight">Participant Emails</h2>
+                <p id="rosterModalSubtitle" class="text-xs text-charcoal/75 mt-1"></p>
             </div>
 
-            <h2 id="rosterModalTitle" class="font-editorial text-3xl text-forest-900 mb-1">Participant Contacts</h2>
-            <p id="rosterModalSubtitle" class="text-xs text-charcoal/75 mb-5">
-                Only you (the organizer) can see these email addresses so you can send the final confirmation and venue details directly.
-            </p>
-
-            <div id="rosterModalList" class="space-y-2 mb-5">
-                <!-- Populated dynamically -->
+            <div id="rosterModalList" class="space-y-2 mb-5 max-h-64 overflow-y-auto pr-1">
+                <!-- Populated dynamically with private emails for organizer only -->
             </div>
 
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-4 border-t border-cream-300">
-                <button type="button" id="copyEmailsBtn" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-cream-200 text-forest-900 border border-cream-300 text-xs font-semibold transition cursor-pointer">
-                    <i data-lucide="copy" class="w-4 h-4 text-forest-700"></i>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-3 border-t border-cream-300">
+                <button id="copyEmailsBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl bg-cream-200 hover:bg-cream-300 text-forest-900 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
                     <span>Copy All Emails</span>
                 </button>
-                <a id="mailtoAllBtn" href="#" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold shadow-xs transition">
-                    <i data-lucide="mail" class="w-4 h-4 text-mustard-400"></i>
+                <a id="mailtoAllBtn" href="#" class="flex-1 py-2.5 px-4 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="send" class="w-4 h-4 text-mustard-400"></i>
                     <span>Open in My Email App</span>
                 </a>
             </div>
@@ -461,7 +444,7 @@
     </div>
 
     <!-- =====================================================================
-         MODAL 4: GITHUB SETUP & BACKEND DEPLOYMENT GUIDE MODAL
+         MODAL 4: CLOUD DATABASE (SUPABASE) & GITHUB PAGES SETUP MODAL
          ===================================================================== -->
     <div id="githubModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-forest-900/60 backdrop-blur-xs p-4">
         <div class="bg-cream-50 border border-cream-300 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl fade-in relative max-h-[90vh] overflow-y-auto">
@@ -471,11 +454,11 @@
 
             <div class="flex items-center gap-3 mb-4">
                 <div class="w-11 h-11 rounded-2xl bg-forest-900 text-white flex items-center justify-center">
-                    <i data-lucide="github" class="w-6 h-6"></i>
+                    <i data-lucide="cloud" class="w-6 h-6 text-mustard-400"></i>
                 </div>
                 <div>
-                    <h2 class="font-editorial text-3xl text-forest-900">GitHub Pages & Production Setup</h2>
-                    <p class="text-xs text-charcoal/70">Hosting and multi-device database notes</p>
+                    <h2 class="font-editorial text-3xl text-forest-900">Sync Across Chrome, Brave & All Devices</h2>
+                    <p class="text-xs text-charcoal/70">Connect a free Supabase cloud database to your GitHub Pages site</p>
                 </div>
             </div>
 
@@ -483,51 +466,121 @@
                 <div class="bg-white p-4 rounded-2xl border border-cream-300">
                     <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
                         <span class="w-5 h-5 rounded-full bg-forest-700 text-white text-xs flex items-center justify-center">1</span>
-                        Deploy on GitHub Pages
+                        Create a Free Supabase Project & Run This SQL
                     </h3>
-                    <ol class="list-decimal list-inside space-y-1 text-xs text-charcoal/80 ml-1">
-                        <li>Create a new GitHub repository (e.g., <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono text-forest-900">gathering-initiatives</code>).</li>
-                        <li>Upload this file as <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono text-forest-900">index.html</code> in the root branch.</li>
-                        <li>Open <strong>Settings → Pages</strong>, select <code class="bg-cream-200 px-1.5 py-0.5 rounded font-mono">main</code> branch as the source, and click <strong>Save</strong>.</li>
-                    </ol>
+                    <p class="text-xs text-charcoal/75 mb-2">
+                        Create a free project at <strong>supabase.com</strong>, disable <em>Confirm email</em> under <strong>Authentication → Providers → Email</strong> (for instant sign-up), then paste this SQL in the <strong>SQL Editor</strong> and click <strong>Run</strong>:
+                    </p>
+                    <div class="relative">
+                        <pre id="supabaseSqlSnippet" class="bg-forest-900 text-cream-100 p-3 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed max-h-48">-- 1. Gatherings Table (Public board + archive)
+create table if not exists gatherings (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  description text not null,
+  date_time timestamptz not null,
+  venue text not null,
+  organizer_id uuid references auth.users not null,
+  organizer_name text not null,
+  max_capacity int not null default 8,
+  is_closed boolean not null default false,
+  is_archived boolean not null default false,
+  archived_at timestamptz,
+  created_at timestamptz default now()
+);
+
+-- 2. Participants Table (Emails protected by Row-Level Security!)
+create table if not exists gathering_participants (
+  id uuid default gen_random_uuid() primary key,
+  gathering_id uuid references gatherings(id) on delete cascade not null,
+  user_id uuid references auth.users not null,
+  display_name text not null,
+  email text not null,
+  joined_at timestamptz default now(),
+  unique(gathering_id, user_id)
+);
+
+-- 3. Public View (Exposes names ONLY; strips all emails from public)
+create or replace view public_gathering_participants as
+  select id, gathering_id, user_id, display_name, joined_at
+  from gathering_participants;
+
+grant select on public_gathering_participants to anon, authenticated;
+
+-- 4. Enable Row-Level Security (RLS)
+alter table gatherings enable row level security;
+alter table gathering_participants enable row level security;
+
+create policy "Anyone can read gatherings" on gatherings for select using (true);
+create policy "Auth users create gatherings" on gatherings for insert with check (auth.uid() = organizer_id);
+create policy "Organizers update own gatherings" on gatherings for update using (auth.uid() = organizer_id);
+
+-- Only organizer (or participant themselves) can read raw table with emails!
+create policy "Organizer or self reads emails" on gathering_participants
+  for select using (
+    auth.uid() = user_id or
+    exists (select 1 from gatherings g where g.id = gathering_id and g.organizer_id = auth.uid())
+  );
+create policy "Auth users join open gatherings" on gathering_participants
+  for insert with check (auth.uid() = user_id);
+create policy "Participants can leave" on gathering_participants
+  for delete using (auth.uid() = user_id);</pre>
+                        <button type="button" onclick="UI.copySqlSnippet()" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cream-200 hover:bg-cream-300 text-forest-900 text-xs font-semibold cursor-pointer">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Copy SQL Setup Script</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-2xl border border-cream-300">
                     <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
                         <span class="w-5 h-5 rounded-full bg-terracotta-500 text-white text-xs flex items-center justify-center">2</span>
-                        How Organizer Emails & Privacy Work
+                        Paste Your Supabase Project URL & Anon Public Key
                     </h3>
-                    <p class="text-xs text-charcoal/80 leading-relaxed">
-                        The public gathering board only renders participant display names. When you sign in as the organizer of a gathering, a <strong>View Participant Emails</strong> button appears on your gathering card, allowing you to copy all emails or launch your email client directly with everyone pre-filled.
+                    <p class="text-xs text-charcoal/75 mb-3">
+                        Find both in <strong>Supabase → Project Settings → API</strong>. To make this permanent for all visitors on GitHub Pages, also paste them into <code class="bg-cream-200 px-1 rounded font-mono">DEFAULT_SUPABASE_CONFIG</code> at the top of the script in <code class="bg-cream-200 px-1 rounded font-mono">index.html</code>.
                     </p>
+                    <form onsubmit="App.saveSupabaseConfig(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-forest-900 mb-1">Project URL</label>
+                            <input type="url" id="sbUrlInput" required placeholder="https://your-project-id.supabase.co" class="w-full px-3.5 py-2 rounded-xl bg-cream-50 border border-cream-300 text-xs font-mono focus:outline-none focus:border-forest-700">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-forest-900 mb-1">Anon / Public Key</label>
+                            <input type="text" id="sbAnonKeyInput" required placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3.5 py-2 rounded-xl bg-cream-50 border border-cream-300 text-xs font-mono focus:outline-none focus:border-forest-700">
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <button type="button" onclick="App.clearSupabaseConfig()" class="text-xs text-charcoal/60 hover:text-terracotta-600 underline cursor-pointer">
+                                Disconnect (Use Local Mode)
+                            </button>
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-xs font-semibold cursor-pointer">
+                                Connect Cloud Database
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="bg-white p-4 rounded-2xl border border-cream-300">
-                    <h3 class="font-bold text-forest-900 mb-1.5 flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-full bg-mustard-500 text-forest-900 text-xs flex items-center justify-center">3</span>
-                        Production Multi-Device Security Recommendation
-                    </h3>
-                    <p class="text-xs text-charcoal/80 leading-relaxed">
-                        Out of the box, this app hashes passwords using Web Crypto <strong>SHA-256</strong> and stores records in <code class="font-mono text-forest-900">localStorage</code> for zero-server testing on GitHub Pages. For live multi-device production across the internet, connect <strong>Supabase Auth + PostgreSQL</strong> or <strong>Firebase Auth + Firestore</strong> (with Row-Level Security so participant emails are only readable by the gathering's organizer).
-                    </p>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end">
-                <button onclick="UI.toggleModal('githubModal', false)" class="px-5 py-2.5 rounded-xl bg-forest-700 hover:bg-forest-800 text-white text-sm font-semibold cursor-pointer">
-                    Done
-                </button>
             </div>
         </div>
     </div>
 
     <!-- =====================================================================
-         APPLICATION ARCHITECTURE (PRIVACY-FIRST & ORGANIZER CONTROLS)
+         APPLICATION ARCHITECTURE (HYBRID CLOUD SUPABASE + LOCAL FALLBACK)
          ===================================================================== -->
     <script>
         /**
          * =====================================================================
-         * MODULE 1: CRYPTO & SECURITY UTILITIES (SHA-256 Password Hashing)
+         * PERMANENT GITHUB PAGES CONFIG:
+         * Paste your Supabase Project URL and Anon Public Key below before
+         * committing index.html to GitHub so all browsers connect automatically!
+         * =====================================================================
+         */
+        const DEFAULT_SUPABASE_CONFIG = {
+            url: '',      // e.g., 'https://xyzcompany.supabase.co'
+            anonKey: ''   // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        };
+
+        /**
+         * =====================================================================
+         * MODULE 1: CRYPTO & SECURITY UTILITIES (Local Fallback Hashing)
          * =====================================================================
          */
         const Security = {
@@ -577,20 +630,60 @@
 
         /**
          * =====================================================================
-         * MODULE 3: STATE STORE (Strict Privacy Separation: Public Names vs Private Users)
+         * MODULE 3: HYBRID CLOUD & LOCAL STATE STORE
          * =====================================================================
          */
         const STORAGE_KEY = 'gathering_initiatives_v3_organizer';
+        const SB_CONFIG_KEY = 'gathering_initiatives_sb_config_v1';
 
         const Store = {
+            sbClient: null,
+            isCloudMode: false,
+            cloudUser: null,
             state: {
                 currentUserId: null,
-                users: [],       // Private table: { id, name, email, passwordHash }
-                gatherings: [],  // Public table: stores { userId, name } and maxCapacity
-                pastLogs: []     // Public archive: stores { userId, name } and maxCapacity
+                users: [],
+                gatherings: [],
+                pastLogs: []
+            },
+
+            getSupabaseCredentials() {
+                if (DEFAULT_SUPABASE_CONFIG.url && DEFAULT_SUPABASE_CONFIG.anonKey) {
+                    return DEFAULT_SUPABASE_CONFIG;
+                }
+                try {
+                    const saved = JSON.parse(localStorage.getItem(SB_CONFIG_KEY));
+                    if (saved && saved.url && saved.anonKey) return saved;
+                } catch (e) {}
+                return null;
             },
 
             async init() {
+                const creds = this.getSupabaseCredentials();
+                if (creds && window.supabase) {
+                    try {
+                        this.sbClient = window.supabase.createClient(creds.url, creds.anonKey);
+                        this.isCloudMode = true;
+                        const { data: { session } } = await this.sbClient.auth.getSession();
+                        this.cloudUser = session?.user || null;
+
+                        this.sbClient.auth.onAuthStateChange((_event, session) => {
+                            this.cloudUser = session?.user || null;
+                            UI.renderAuthHeader();
+                        });
+
+                        await this.syncFromCloud();
+                        this.subscribeRealtime();
+                        return;
+                    } catch (err) {
+                        console.error('Supabase connection failed, falling back to local mode:', err);
+                        this.isCloudMode = false;
+                        this.sbClient = null;
+                    }
+                }
+
+                // Local browser fallback when Supabase keys are not yet configured
+                this.isCloudMode = false;
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
                     try {
@@ -604,11 +697,104 @@
                 this.runExpiryCheck(false);
             },
 
+            subscribeRealtime() {
+                if (!this.sbClient) return;
+                this.sbClient
+                    .channel('public-gatherings-sync')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'gatherings' }, () => this.syncFromCloud())
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'gathering_participants' }, () => this.syncFromCloud())
+                    .subscribe();
+            },
+
+            async syncFromCloud() {
+                if (!this.sbClient) return;
+                const now = new Date();
+
+                // 1. Fetch all gatherings (active + archived)
+                const { data: rows, error } = await this.sbClient
+                    .from('gatherings')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching gatherings:', error);
+                    return;
+                }
+
+                // 2. Fetch public participant names (NO emails exposed to public view)
+                const { data: publicParts } = await this.sbClient
+                    .from('public_gathering_participants')
+                    .select('*')
+                    .order('joined_at', { ascending: true });
+
+                const partsByGathering = {};
+                (publicParts || []).forEach(p => {
+                    if (!partsByGathering[p.gathering_id]) partsByGathering[p.gathering_id] = [];
+                    partsByGathering[p.gathering_id].push({
+                        userId: p.user_id,
+                        name: p.display_name
+                    });
+                });
+
+                const activeList = [];
+                const pastList = [];
+
+                for (const r of (rows || [])) {
+                    const mapped = {
+                        id: r.id,
+                        title: r.title,
+                        description: r.description,
+                        dateTime: r.date_time,
+                        venue: r.venue,
+                        organizerId: r.organizer_id,
+                        organizerName: r.organizer_name,
+                        maxCapacity: r.max_capacity || 8,
+                        participants: partsByGathering[r.id] || [],
+                        isClosed: r.is_closed,
+                        createdAt: r.created_at,
+                        archivedAt: r.archived_at
+                    };
+
+                    // Auto-archive expired gatherings
+                    if (!r.is_archived && new Date(r.date_time) <= now) {
+                        mapped.isClosed = true;
+                        mapped.archivedAt = now.toISOString();
+                        pastList.push(mapped);
+                        if (this.cloudUser && r.organizer_id === this.cloudUser.id) {
+                            this.sbClient
+                                .from('gatherings')
+                                .update({ is_archived: true, is_closed: true, archived_at: now.toISOString() })
+                                .eq('id', r.id)
+                                .then(() => {});
+                        }
+                    } else if (r.is_archived) {
+                        pastList.push(mapped);
+                    } else {
+                        activeList.push(mapped);
+                    }
+                }
+
+                this.state.gatherings = activeList;
+                this.state.pastLogs = pastList;
+                UI.renderAll();
+            },
+
             save() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                if (!this.isCloudMode) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                }
             },
 
             getCurrentUser() {
+                if (this.isCloudMode) {
+                    if (!this.cloudUser) return null;
+                    const displayName = this.cloudUser.user_metadata?.display_name || this.cloudUser.email.split('@')[0];
+                    return {
+                        id: this.cloudUser.id,
+                        name: displayName,
+                        email: this.cloudUser.email
+                    };
+                }
                 if (!this.state.currentUserId) return null;
                 return this.state.users.find(u => u.id === this.state.currentUserId) || null;
             },
@@ -718,7 +904,11 @@
                 this.save();
             },
 
-            runExpiryCheck(notifyUser = false) {
+            async runExpiryCheck(notifyUser = false) {
+                if (this.isCloudMode) {
+                    await this.syncFromCloud();
+                    return;
+                }
                 const now = new Date();
                 const stillActive = [];
                 let movedCount = 0;
@@ -762,8 +952,38 @@
                 UI.renderAll();
                 lucide.createIcons();
 
+                // Prefill Supabase modal fields if configured
+                const creds = Store.getSupabaseCredentials();
+                if (creds) {
+                    const urlEl = document.getElementById('sbUrlInput');
+                    const keyEl = document.getElementById('sbAnonKeyInput');
+                    if (urlEl) urlEl.value = creds.url;
+                    if (keyEl) keyEl.value = creds.anonKey;
+                }
+
                 // Check for expired gatherings every 30 seconds automatically
                 setInterval(() => Store.runExpiryCheck(true), 30000);
+            },
+
+            async saveSupabaseConfig(event) {
+                event.preventDefault();
+                const url = document.getElementById('sbUrlInput').value.trim();
+                const anonKey = document.getElementById('sbAnonKeyInput').value.trim();
+                localStorage.setItem(SB_CONFIG_KEY, JSON.stringify({ url, anonKey }));
+                UI.toggleModal('githubModal', false);
+                UI.showToast('Connecting to Cloud...', 'Syncing live gatherings and accounts from Supabase.', 'forest');
+                await Store.init();
+                UI.renderAll();
+            },
+
+            async clearSupabaseConfig() {
+                localStorage.removeItem(SB_CONFIG_KEY);
+                document.getElementById('sbUrlInput').value = '';
+                document.getElementById('sbAnonKeyInput').value = '';
+                UI.toggleModal('githubModal', false);
+                await Store.init();
+                UI.renderAll();
+                UI.showToast('Local Mode Active', 'Switched back to browser-local preview storage.', 'neutral');
             },
 
             async handleLogin(event) {
@@ -772,6 +992,23 @@
                 const password = document.getElementById('loginPasswordInput').value;
                 const errorEl = document.getElementById('authErrorMsg');
                 errorEl.classList.add('hidden');
+
+                if (Store.isCloudMode) {
+                    const { data, error } = await Store.sbClient.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        errorEl.textContent = error.message;
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    Store.cloudUser = data.user;
+                    document.getElementById('loginEmailInput').value = '';
+                    document.getElementById('loginPasswordInput').value = '';
+                    UI.toggleModal('authModal', false);
+                    await Store.syncFromCloud();
+                    const user = Store.getCurrentUser();
+                    UI.showToast('Signed In (Cloud Sync)', `Welcome back, ${user.name}!`, 'forest');
+                    return;
+                }
 
                 const user = Store.state.users.find(u => u.email.toLowerCase() === email);
                 if (!user) {
@@ -811,6 +1048,32 @@
                     return;
                 }
 
+                if (Store.isCloudMode) {
+                    const { data, error } = await Store.sbClient.auth.signUp({
+                        email,
+                        password,
+                        options: { data: { display_name: name } }
+                    });
+                    if (error) {
+                        errorEl.textContent = error.message;
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    document.getElementById('regNameInput').value = '';
+                    document.getElementById('regEmailInput').value = '';
+                    document.getElementById('regPasswordInput').value = '';
+                    UI.toggleModal('authModal', false);
+
+                    if (!data.session) {
+                        UI.showToast('Check Your Email', 'Please confirm your email link from Supabase, then sign in.', 'mustard');
+                    } else {
+                        Store.cloudUser = data.user;
+                        await Store.syncFromCloud();
+                        UI.showToast('Cloud Account Created', `Signed in as ${name}. Your account now works across all devices!`, 'forest');
+                    }
+                    return;
+                }
+
                 const existing = Store.state.users.find(u => u.email.toLowerCase() === email);
                 if (existing) {
                     errorEl.textContent = 'An account with this email already exists. Please switch to Sign In.';
@@ -838,7 +1101,11 @@
                 UI.showToast('Account Created', `Signed in as ${newUser.name}. Your email is only visible to organizers of groups you join.`, 'forest');
             },
 
-            signOut() {
+            async signOut() {
+                if (Store.isCloudMode && Store.sbClient) {
+                    await Store.sbClient.auth.signOut();
+                    Store.cloudUser = null;
+                }
                 Store.state.currentUserId = null;
                 Store.save();
                 UI.renderAll();
@@ -851,19 +1118,18 @@
                     UI.openAuthModal('login');
                     return;
                 }
-
-                const defaultDate = new Date(Date.now() + 2 * 86400000);
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 4);
                 defaultDate.setHours(19, 0, 0, 0);
                 const tzOffset = defaultDate.getTimezoneOffset() * 60000;
-                const localISOTime = (new Date(defaultDate - tzOffset)).toISOString().slice(0, 16);
-
+                const localISOTime = new Date(defaultDate - tzOffset).toISOString().slice(0, 16);
                 document.getElementById('topicDateTimeInput').value = localISOTime;
                 document.getElementById('topicCapacityInput').value = 8;
-                document.getElementById('createOrganizerPreview').textContent = user.name;
+
                 UI.toggleModal('createModal', true);
             },
 
-            handleCreateGathering(event) {
+            async handleCreateGathering(event) {
                 event.preventDefault();
                 const user = Store.getCurrentUser();
                 if (!user) return;
@@ -877,6 +1143,46 @@
                 const parsedDate = new Date(dateTimeRaw);
                 if (parsedDate <= new Date()) {
                     UI.showToast('Invalid Date/Time', 'Please choose a date and time in the future.', 'terracotta');
+                    return;
+                }
+
+                if (Store.isCloudMode) {
+                    const { data: created, error } = await Store.sbClient
+                        .from('gatherings')
+                        .insert({
+                            title,
+                            description,
+                            date_time: parsedDate.toISOString(),
+                            venue,
+                            organizer_id: user.id,
+                            organizer_name: user.name,
+                            max_capacity: maxCapacity,
+                            is_closed: false
+                        })
+                        .select()
+                        .single();
+
+                    if (error) {
+                        UI.showToast('Error Publishing', error.message, 'terracotta');
+                        return;
+                    }
+
+                    // Add organizer as Participant #1
+                    await Store.sbClient.from('gathering_participants').insert({
+                        gathering_id: created.id,
+                        user_id: user.id,
+                        display_name: user.name,
+                        email: user.email
+                    });
+
+                    document.getElementById('topicTitleInput').value = '';
+                    document.getElementById('topicDescInput').value = '';
+                    document.getElementById('topicVenueInput').value = '';
+
+                    UI.toggleModal('createModal', false);
+                    UI.switchTab('active');
+                    await Store.syncFromCloud();
+                    UI.showToast('Gathering Published Live!', `Your circle "${title}" is now synced across all browsers.`, 'forest');
                     return;
                 }
 
@@ -907,7 +1213,7 @@
                 UI.showToast('Gathering Published!', `Your circle "${title}" is now live (1/${maxCapacity} filled).`, 'forest');
             },
 
-            joinGathering(gatheringId) {
+            async joinGathering(gatheringId) {
                 const user = Store.getCurrentUser();
                 if (!user) {
                     UI.openAuthModal('login');
@@ -926,6 +1232,28 @@
                 const alreadyJoined = gathering.participants.some(p => p.userId === user.id);
                 if (alreadyJoined) {
                     UI.showToast('Already Joined', 'Your name is already in this discussion circle.', 'neutral');
+                    return;
+                }
+
+                if (Store.isCloudMode) {
+                    const { error } = await Store.sbClient.from('gathering_participants').insert({
+                        gathering_id: gatheringId,
+                        user_id: user.id,
+                        display_name: user.name,
+                        email: user.email
+                    });
+                    if (error) {
+                        UI.showToast('Could Not Join', error.message, 'terracotta');
+                        return;
+                    }
+                    await Store.syncFromCloud();
+                    const updated = Store.state.gatherings.find(g => g.id === gatheringId);
+                    const newCount = updated ? updated.participants.length : gathering.participants.length + 1;
+                    UI.showToast(
+                        newCount >= capacity ? `Circle Full (${capacity}/${capacity})!` : 'Joined Circle!',
+                        `You're in (${newCount}/${capacity})! ${gathering.organizerName} can view your email to send updates.`,
+                        newCount >= capacity ? 'mustard' : 'forest'
+                    );
                     return;
                 }
 
@@ -951,7 +1279,7 @@
                 }
             },
 
-            leaveGathering(gatheringId) {
+            async leaveGathering(gatheringId) {
                 const user = Store.getCurrentUser();
                 if (!user) return;
 
@@ -969,6 +1297,17 @@
                     return;
                 }
 
+                if (Store.isCloudMode) {
+                    await Store.sbClient
+                        .from('gathering_participants')
+                        .delete()
+                        .eq('gathering_id', gatheringId)
+                        .eq('user_id', user.id);
+                    await Store.syncFromCloud();
+                    UI.showToast('Spot Released', 'You have left this gathering circle.', 'neutral');
+                    return;
+                }
+
                 gathering.participants = gathering.participants.filter(p => p.userId !== user.id);
                 Store.save();
                 UI.renderAll();
@@ -978,7 +1317,7 @@
             /**
              * Organizer-only: Manually close or reopen their gathering regardless of headcount
              */
-            toggleGatheringClose(gatheringId) {
+            async toggleGatheringClose(gatheringId) {
                 const user = Store.getCurrentUser();
                 if (!user) return;
 
@@ -986,31 +1325,44 @@
                 if (!gathering || gathering.organizerId !== user.id) return;
 
                 const capacity = gathering.maxCapacity || 8;
-                if (gathering.isClosed) {
-                    if (gathering.participants.length >= capacity) {
-                        UI.showToast('Circle at Max Capacity', `All ${capacity} spots are already filled.`, 'terracotta');
+                const nextClosedState = !gathering.isClosed;
+
+                if (!nextClosedState && gathering.participants.length >= capacity) {
+                    UI.showToast('Circle at Max Capacity', `All ${capacity} spots are already filled.`, 'terracotta');
+                    return;
+                }
+
+                if (Store.isCloudMode) {
+                    const { error } = await Store.sbClient
+                        .from('gatherings')
+                        .update({ is_closed: nextClosedState })
+                        .eq('id', gatheringId);
+                    if (error) {
+                        UI.showToast('Update Failed', error.message, 'terracotta');
                         return;
                     }
-                    gathering.isClosed = false;
-                    Store.save();
-                    UI.renderAll();
-                    UI.showToast('Circle Reopened', 'New participants can now join your gathering.', 'forest');
+                    await Store.syncFromCloud();
                 } else {
-                    gathering.isClosed = true;
+                    gathering.isClosed = nextClosedState;
                     Store.save();
                     UI.renderAll();
+                }
+
+                if (nextClosedState) {
                     UI.showToast(
                         'Circle Closed by Organizer',
-                        `Sign-ups are now locked (${gathering.participants.length}/${capacity}). Click "View Participant Emails" to send details.`,
+                        `Sign-ups are now locked (${gathering.participants.length}/${capacity}). Click "View Emails" to send details.`,
                         'mustard'
                     );
+                } else {
+                    UI.showToast('Circle Reopened', 'New participants can now join your gathering.', 'forest');
                 }
             },
 
             /**
              * Organizer-only: Open private roster with participant email addresses
              */
-            openOrganizerRoster(gatheringId) {
+            async openOrganizerRoster(gatheringId) {
                 const user = Store.getCurrentUser();
                 if (!user) return;
 
@@ -1023,28 +1375,50 @@
                 document.getElementById('rosterModalSubtitle').textContent =
                     `${gathering.participants.length} of ${capacity} spots filled • ${Utils.formatDateTime(gathering.dateTime)} at ${gathering.venue}`;
 
-                const emails = [];
-                const rowsHtml = gathering.participants.map((p, idx) => {
-                    const fullUser = Store.findUserById(p.userId);
-                    const email = fullUser ? fullUser.email : 'Email unavailable';
-                    if (fullUser && fullUser.email) emails.push(fullUser.email);
+                let rosterEntries = [];
 
-                    return `
-                        <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-cream-300">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <span class="w-7 h-7 rounded-full ${idx === 0 ? 'bg-forest-700 text-white' : 'bg-terracotta-500/85 text-white'} text-xs font-bold flex items-center justify-center shrink-0">
-                                    ${Utils.getInitials(p.name)}
-                                </span>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-bold text-forest-900 truncate">
-                                        ${UI.escapeHTML(p.name)} ${idx === 0 ? '<span class="text-forest-700 font-semibold">(You / Host)</span>' : ''}
-                                    </p>
-                                    <p class="text-xs font-mono text-charcoal/75 truncate">${UI.escapeHTML(email)}</p>
-                                </div>
+                if (Store.isCloudMode) {
+                    // Protected by Supabase Row-Level Security: only succeeds for the gathering's organizer
+                    const { data, error } = await Store.sbClient
+                        .from('gathering_participants')
+                        .select('user_id, display_name, email')
+                        .eq('gathering_id', gatheringId)
+                        .order('joined_at', { ascending: true });
+
+                    if (error) {
+                        UI.showToast('Access Denied', error.message, 'terracotta');
+                        return;
+                    }
+                    rosterEntries = (data || []).map(row => ({
+                        name: row.display_name,
+                        email: row.email
+                    }));
+                } else {
+                    rosterEntries = gathering.participants.map(p => {
+                        const fullUser = Store.findUserById(p.userId);
+                        return {
+                            name: p.name,
+                            email: fullUser ? fullUser.email : 'Email unavailable'
+                        };
+                    });
+                }
+
+                const emails = rosterEntries.map(r => r.email).filter(Boolean);
+                const rowsHtml = rosterEntries.map((entry, idx) => `
+                    <div class="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-cream-300">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-7 h-7 rounded-full ${idx === 0 ? 'bg-forest-700 text-white' : 'bg-terracotta-500/85 text-white'} text-xs font-bold flex items-center justify-center shrink-0">
+                                ${Utils.getInitials(entry.name)}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-forest-900 truncate">
+                                    ${UI.escapeHTML(entry.name)} ${idx === 0 ? '<span class="text-forest-700 font-semibold">(You / Host)</span>' : ''}
+                                </p>
+                                <p class="text-xs font-mono text-charcoal/75 truncate">${UI.escapeHTML(entry.email)}</p>
                             </div>
                         </div>
-                    `;
-                }).join('');
+                    </div>
+                `).join('');
 
                 document.getElementById('rosterModalList').innerHTML = rowsHtml;
 
@@ -1073,6 +1447,10 @@
             },
 
             async resetDemoData() {
+                if (Store.isCloudMode) {
+                    UI.showToast('Cloud Database Connected', 'Resetting local sample data is disabled while connected to live Supabase.', 'neutral');
+                    return;
+                }
                 localStorage.removeItem(STORAGE_KEY);
                 await Store.seedDefaults();
                 UI.renderAll();
@@ -1089,11 +1467,39 @@
             currentTab: 'active',
 
             renderAll() {
+                this.renderCloudStatusBadge();
                 this.renderAuthHeader();
                 this.renderGatherings();
                 this.renderPastLogs();
                 this.updateCounts();
                 lucide.createIcons();
+            },
+
+            renderCloudStatusBadge() {
+                const badge = document.getElementById('cloudStatusBadge');
+                const resetBtn = document.getElementById('resetDemoFooterBtn');
+                if (!badge) return;
+
+                if (Store.isCloudMode) {
+                    badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-forest-600 text-white';
+                    badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-mustard-400 animate-pulse"></span><span>Live Cloud Sync Active</span>`;
+                    if (resetBtn) resetBtn.classList.add('hidden');
+                } else {
+                    badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-mustard-500 text-forest-900';
+                    badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-forest-900"></span><span>Local Preview Mode (Click Cloud Setup to Sync Browsers)</span>`;
+                    if (resetBtn) resetBtn.classList.remove('hidden');
+                }
+            },
+
+            copySqlSnippet() {
+                const sqlText = document.getElementById('supabaseSqlSnippet').textContent;
+                const tempInput = document.createElement('textarea');
+                tempInput.value = sqlText;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                this.showToast('SQL Script Copied', 'Paste it into your Supabase SQL Editor and click Run.', 'forest');
             },
 
             switchTab(tab) {
@@ -1443,6 +1849,7 @@
 
             toggleModal(modalId, show) {
                 const modal = document.getElementById(modalId);
+                if (!modal) return;
                 if (show) {
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
@@ -1451,18 +1858,6 @@
                     modal.classList.remove('flex');
                 }
                 lucide.createIcons();
-            },
-
-            toggleEmailDrawer(show) {
-                const drawer = document.getElementById('emailDrawer');
-                const backdrop = document.getElementById('emailDrawerBackdrop');
-                if (show) {
-                    backdrop.classList.remove('hidden');
-                    drawer.classList.remove('translate-x-full');
-                } else {
-                    backdrop.classList.add('hidden');
-                    drawer.classList.add('translate-x-full');
-                }
             },
 
             showToast(title, message, tone = 'forest') {
